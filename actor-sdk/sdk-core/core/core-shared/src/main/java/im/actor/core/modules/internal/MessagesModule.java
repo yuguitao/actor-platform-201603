@@ -67,7 +67,6 @@ import im.actor.runtime.eventbus.BusSubscriber;
 import im.actor.runtime.eventbus.Event;
 import im.actor.runtime.files.FileSystemReference;
 import im.actor.runtime.mvvm.MVVMCollection;
-import im.actor.runtime.storage.KeyValueEngine;
 import im.actor.runtime.storage.ListEngine;
 import im.actor.runtime.storage.SyncKeyValue;
 
@@ -75,7 +74,8 @@ import static im.actor.runtime.actors.ActorSystem.system;
 
 public class MessagesModule extends AbsModule implements BusSubscriber {
 
-    private ListEngine<Dialog> dialogs;
+    private ListEngine<Dialog> groupDialogs;
+    private ListEngine<Dialog> contactsDialogs;
 
     private ActorRef dialogsActor;
     private ActorRef dialogsHistoryActor;
@@ -104,7 +104,8 @@ public class MessagesModule extends AbsModule implements BusSubscriber {
 
         this.dialogDescKeyValue = Storage.createKeyValue(STORAGE_DIALOGS_DESC, DialogSpecVM.CREATOR, DialogSpec.CREATOR);
         this.cursorStorage = new SyncKeyValue(Storage.createKeyValue(STORAGE_CURSOR));
-        this.dialogs = Storage.createList(STORAGE_DIALOGS, Dialog.CREATOR);
+        this.groupDialogs = Storage.createList(STORAGE_GROUP_DIALOGS, Dialog.CREATOR);
+        this.contactsDialogs = Storage.createList(STORAGE_CONTACTS_DIALOGS, Dialog.CREATOR);
     }
 
     public void run() {
@@ -262,8 +263,12 @@ public class MessagesModule extends AbsModule implements BusSubscriber {
         return dialogsGroupedActor;
     }
 
-    public ListEngine<Dialog> getDialogsEngine() {
-        return dialogs;
+    public ListEngine<Dialog> getGroupDialogsEngine() {
+        return groupDialogs;
+    }
+
+    public ListEngine<Dialog> getPrivateDialogsEngine() {
+        return contactsDialogs;
     }
 
     public void deleteMessages(Peer peer, long[] rids) {
@@ -276,11 +281,11 @@ public class MessagesModule extends AbsModule implements BusSubscriber {
         deletionsActor.send(new MessageDeleteActor.DeleteMessage(peer, rids));
     }
 
-    public void loadMoreDialogs() {
+    public void loadMoreDialogs(final boolean isGroup) {
         im.actor.runtime.Runtime.dispatch(new Runnable() {
             @Override
             public void run() {
-                dialogsHistoryActor.send(new DialogsHistoryActor.LoadMore());
+                dialogsHistoryActor.send(new DialogsHistoryActor.LoadMore(isGroup));
             }
         });
     }

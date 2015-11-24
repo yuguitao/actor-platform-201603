@@ -16,6 +16,7 @@ import im.actor.core.entity.Group;
 import im.actor.core.entity.Message;
 import im.actor.core.entity.MessageState;
 import im.actor.core.entity.Peer;
+import im.actor.core.entity.PeerType;
 import im.actor.core.entity.User;
 import im.actor.core.entity.content.AbsContent;
 import im.actor.core.modules.ModuleContext;
@@ -30,7 +31,8 @@ import static im.actor.core.util.JavaUtil.equalsE;
 
 public class DialogsActor extends ModuleActor {
 
-    private ListEngine<Dialog> dialogs;
+    private ListEngine<Dialog> groups;
+    private ListEngine<Dialog> contacts;
     private Boolean isEmpty;
     private Boolean emptyNotified;
 
@@ -41,7 +43,8 @@ public class DialogsActor extends ModuleActor {
     @Override
     public void preStart() {
         super.preStart();
-        this.dialogs = context().getMessagesModule().getDialogsEngine();
+        this.groups = context().getMessagesModule().getGroupDialogsEngine();
+        this.contacts = context().getMessagesModule().getPrivateDialogsEngine();
         notifyState(true);
     }
 
@@ -64,7 +67,12 @@ public class DialogsActor extends ModuleActor {
             // Else perform chat clear
             onChatClear(peer);
         } else {
-            Dialog dialog = dialogs.getValue(peer.getUnuqueId());
+            Dialog dialog;
+            if (peer.getPeerType() == PeerType.GROUP) {
+                dialog = groups.getValue(peer.getUnuqueId());
+            } else {
+                dialog = contacts.getValue(peer.getUnuqueId());
+            }
 
             ContentDescription contentDescription = ContentDescription.fromContent(message.getContent());
 
@@ -124,7 +132,13 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onUserChanged(User user) {
-        Dialog dialog = dialogs.getValue(user.peer().getUnuqueId());
+        Dialog dialog;
+        if (user.peer().getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(user.peer().getUnuqueId());
+        } else {
+            dialog = contacts.getValue(user.peer().getUnuqueId());
+        }
+
         if (dialog != null) {
             // Ignore if nothing changed
             if (dialog.getDialogTitle().equals(user.getName())
@@ -141,7 +155,12 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onGroupChanged(Group group) {
-        Dialog dialog = dialogs.getValue(group.peer().getUnuqueId());
+        Dialog dialog;
+        if (group.peer().getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(group.peer().getUnuqueId());
+        } else {
+            dialog = contacts.getValue(group.peer().getUnuqueId());
+        }
         if (dialog != null) {
             // Ignore if nothing changed
             if (dialog.getDialogTitle().equals(group.getTitle())
@@ -159,14 +178,24 @@ public class DialogsActor extends ModuleActor {
     @Verified
     private void onChatDeleted(Peer peer) {
         // Removing dialog
-        dialogs.removeItem(peer.getUnuqueId());
+        if (peer.getPeerType() == PeerType.GROUP) {
+            groups.removeItem(peer.getUnuqueId());
+        } else {
+            contacts.removeItem(peer.getUnuqueId());
+
+        }
 
         notifyState(true);
     }
 
     @Verified
     private void onChatClear(Peer peer) {
-        Dialog dialog = dialogs.getValue(peer.getUnuqueId());
+        Dialog dialog;
+        if (peer.getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(peer.getUnuqueId());
+        } else {
+            dialog = contacts.getValue(peer.getUnuqueId());
+        }
 
         // If we have dialog for this peer
         if (dialog != null) {
@@ -186,8 +215,12 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onMessageStatusChanged(Peer peer, long rid, MessageState state) {
-        Dialog dialog = dialogs.getValue(peer.getUnuqueId());
-
+        Dialog dialog;
+        if (peer.getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(peer.getUnuqueId());
+        } else {
+            dialog = contacts.getValue(peer.getUnuqueId());
+        }
         // If message is on top
         if (dialog != null && dialog.getRid() == rid) {
 
@@ -200,8 +233,12 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onMessageContentChanged(Peer peer, long rid, AbsContent content) {
-        Dialog dialog = dialogs.getValue(peer.getUnuqueId());
-
+        Dialog dialog;
+        if (peer.getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(peer.getUnuqueId());
+        } else {
+            dialog = contacts.getValue(peer.getUnuqueId());
+        }
         // If message is on top
         if (dialog != null && dialog.getRid() == rid) {
 
@@ -217,8 +254,12 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onCounterChanged(Peer peer, int count) {
-        Dialog dialog = dialogs.getValue(peer.getUnuqueId());
-
+        Dialog dialog;
+        if (peer.getPeerType() == PeerType.GROUP) {
+            dialog = groups.getValue(peer.getUnuqueId());
+        } else {
+            dialog = contacts.getValue(peer.getUnuqueId());
+        }
         // If we have dialog for this peer
         if (dialog != null) {
 
@@ -236,10 +277,12 @@ public class DialogsActor extends ModuleActor {
 
     @Verified
     private void onHistoryLoaded(List<DialogHistory> history) {
-        ArrayList<Dialog> updated = new ArrayList<Dialog>();
+        ArrayList<Dialog> updatedGroups = new ArrayList<Dialog>();
+        ArrayList<Dialog> updatedContacts = new ArrayList<Dialog>();
         for (DialogHistory dialogHistory : history) {
-            // Ignore already available dialogs
-            if (dialogs.getValue(dialogHistory.getPeer().getUnuqueId()) != null) {
+            // Ignore already available groups
+            if (groups.getValue(dialogHistory.getPeer().getUnuqueId()) != null ||
+                    contacts.getValue(dialogHistory.getPeer().getUnuqueId()) != null) {
                 continue;
             }
 
@@ -250,26 +293,40 @@ public class DialogsActor extends ModuleActor {
 
             ContentDescription description = ContentDescription.fromContent(dialogHistory.getContent());
 
-            updated.add(new Dialog(dialogHistory.getPeer(),
-                    dialogHistory.getSortDate(), peerDesc.getTitle(), peerDesc.getAvatar(),
-                    dialogHistory.getUnreadCount(),
-                    dialogHistory.getRid(), description.getContentType(), description.getText(), dialogHistory.getStatus(),
-                    dialogHistory.getSenderId(), dialogHistory.getDate(), description.getRelatedUser()));
+            if (dialogHistory.getPeer().getPeerType() == PeerType.GROUP) {
+                updatedGroups.add(new Dialog(dialogHistory.getPeer(),
+                        dialogHistory.getSortDate(), peerDesc.getTitle(), peerDesc.getAvatar(),
+                        dialogHistory.getUnreadCount(),
+                        dialogHistory.getRid(), description.getContentType(), description.getText(), dialogHistory.getStatus(),
+                        dialogHistory.getSenderId(), dialogHistory.getDate(), description.getRelatedUser()));
+            } else {
+                updatedContacts.add(new Dialog(dialogHistory.getPeer(),
+                        dialogHistory.getSortDate(), peerDesc.getTitle(), peerDesc.getAvatar(),
+                        dialogHistory.getUnreadCount(),
+                        dialogHistory.getRid(), description.getContentType(), description.getText(), dialogHistory.getStatus(),
+                        dialogHistory.getSenderId(), dialogHistory.getDate(), description.getRelatedUser()));
+            }
+
         }
-        addOrUpdateItems(updated);
-        updateSearch(updated);
+        addOrUpdateItems(updatedGroups, updatedContacts);
+        updateSearch(updatedGroups, updatedContacts);
         context().getAppStateModule().onDialogsLoaded();
         notifyState(true);
     }
 
     // Utils
 
-    private void addOrUpdateItems(List<Dialog> updated) {
-        dialogs.addOrUpdateItems(updated);
+    private void addOrUpdateItems(List<Dialog> updated, ArrayList<Dialog> updatedContacts) {
+        groups.addOrUpdateItems(updated);
+        contacts.addOrUpdateItems(updatedContacts);
     }
 
     private void addOrUpdateItem(Dialog dialog) {
-        dialogs.addOrUpdateItem(dialog);
+        if (dialog.getPeer().getPeerType() == PeerType.GROUP) {
+            groups.addOrUpdateItem(dialog);
+        } else {
+            contacts.addOrUpdateItem(dialog);
+        }
     }
 
     private void updateSearch(Dialog dialog) {
@@ -278,13 +335,16 @@ public class DialogsActor extends ModuleActor {
         context().getSearchModule().onDialogsChanged(d);
     }
 
-    private void updateSearch(List<Dialog> updated) {
-        context().getSearchModule().onDialogsChanged(updated);
+    private void updateSearch(List<Dialog> updated, ArrayList<Dialog> updatedContacts) {
+        ArrayList<Dialog> searchUpdate = new ArrayList<Dialog>();
+        searchUpdate.addAll(updatedContacts);
+        searchUpdate.addAll(updated);
+        context().getSearchModule().onDialogsChanged(searchUpdate);
     }
 
     private void notifyState(boolean force) {
         if (isEmpty == null || force) {
-            isEmpty = this.dialogs.isEmpty();
+            isEmpty = this.groups.isEmpty() && this.contacts.isEmpty();
         }
 
         if (!isEmpty.equals(emptyNotified)) {

@@ -45,7 +45,7 @@ public abstract class BaseDialogFragment extends DisplayListFragment<Dialog, Dia
         }
 
         View res = inflate(inflater, container, R.layout.fragment_dialogs,
-                messenger().getDialogsDisplayList());
+                getFragmentDisplayList());
         res.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
         // setAnimationsEnabled(true);
 
@@ -96,6 +96,10 @@ public abstract class BaseDialogFragment extends DisplayListFragment<Dialog, Dia
         emptyDialogs.findViewById(R.id.empty_dialogs_bg).setBackgroundColor(ActorSDK.sharedActor().style.getMainColor());
 
         return res;
+    }
+
+    protected BindedDisplayList<Dialog> getFragmentDisplayList() {
+        return messenger().getDialogsDisplayList();
     }
 
     @Override

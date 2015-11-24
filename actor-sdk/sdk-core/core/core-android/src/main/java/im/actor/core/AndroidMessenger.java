@@ -57,6 +57,7 @@ public class AndroidMessenger extends im.actor.core.Messenger {
     private final Random random = new Random();
     private ActorRef appStateActor;
     private BindedDisplayList<Dialog> dialogList;
+    private BindedDisplayList<Dialog> privateDialogList;
     private HashMap<Peer, BindedDisplayList<Message>> messagesLists = new HashMap<Peer, BindedDisplayList<Message>>();
     private HashMap<Peer, BindedDisplayList<Message>> docsLists = new HashMap<Peer, BindedDisplayList<Message>>();
 
@@ -422,7 +423,7 @@ public class AndroidMessenger extends im.actor.core.Messenger {
             dialogList.setBindHook(new BindedDisplayList.BindHook<Dialog>() {
                 @Override
                 public void onScrolledToEnd() {
-                    modules.getMessagesModule().loadMoreDialogs();
+                    modules.getMessagesModule().loadMoreDialogs(true);
                 }
 
                 @Override
@@ -433,6 +434,25 @@ public class AndroidMessenger extends im.actor.core.Messenger {
         }
 
         return dialogList;
+    }
+
+    public BindedDisplayList<Dialog> getPrivateDialogsDisplayList() {
+        if (privateDialogList == null) {
+            privateDialogList = (BindedDisplayList<Dialog>) modules.getDisplayListsModule().getPrivateDialogsSharedList();
+            privateDialogList.setBindHook(new BindedDisplayList.BindHook<Dialog>() {
+                @Override
+                public void onScrolledToEnd() {
+                    modules.getMessagesModule().loadMoreDialogs(false);
+                }
+
+                @Override
+                public void onItemTouched(Dialog item) {
+
+                }
+            });
+        }
+
+        return privateDialogList;
     }
 
     public BindedDisplayList<Message> getMessageDisplayList(final Peer peer) {

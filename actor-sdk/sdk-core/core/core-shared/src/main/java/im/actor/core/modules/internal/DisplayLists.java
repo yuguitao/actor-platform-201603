@@ -19,7 +19,8 @@ import im.actor.runtime.mvvm.PlatformDisplayList;
 
 public class DisplayLists extends AbsModule {
 
-    private PlatformDisplayList<Dialog> dialogGlobalList;
+    private PlatformDisplayList<Dialog> groupDialogGlobalList;
+    private PlatformDisplayList<Dialog> privateDialogGlobalList;
 
     private PlatformDisplayList<Contact> contactsGlobalList;
 
@@ -43,11 +44,21 @@ public class DisplayLists extends AbsModule {
     public PlatformDisplayList<Dialog> getDialogsSharedList() {
         im.actor.runtime.Runtime.checkMainThread();
 
-        if (dialogGlobalList == null) {
-            dialogGlobalList = buildDialogsList(true);
+        if (groupDialogGlobalList == null) {
+            groupDialogGlobalList = buildGroupDialogsList(true);
         }
 
-        return dialogGlobalList;
+        return groupDialogGlobalList;
+    }
+
+    public PlatformDisplayList<Dialog> getPrivateDialogsSharedList() {
+        im.actor.runtime.Runtime.checkMainThread();
+
+        if (privateDialogGlobalList == null) {
+            privateDialogGlobalList = buildPrivateDialogsList(true);
+        }
+
+        return privateDialogGlobalList;
     }
 
     public PlatformDisplayList<Message> getMessagesSharedList(Peer peer) {
@@ -71,10 +82,21 @@ public class DisplayLists extends AbsModule {
     }
 
 
-    public PlatformDisplayList<Dialog> buildDialogsList(boolean isShared) {
+    public PlatformDisplayList<Dialog> buildGroupDialogsList(boolean isShared) {
         im.actor.runtime.Runtime.checkMainThread();
 
-        PlatformDisplayList<Dialog> res = Storage.createDisplayList(context().getMessagesModule().getDialogsEngine(),
+        PlatformDisplayList<Dialog> res = Storage.createDisplayList(context().getMessagesModule().getGroupDialogsEngine(),
+                isShared, Dialog.ENTITY_NAME);
+
+        res.initTop();
+
+        return res;
+    }
+
+    public PlatformDisplayList<Dialog> buildPrivateDialogsList(boolean isShared) {
+        im.actor.runtime.Runtime.checkMainThread();
+
+        PlatformDisplayList<Dialog> res = Storage.createDisplayList(context().getMessagesModule().getPrivateDialogsEngine(),
                 isShared, Dialog.ENTITY_NAME);
 
         res.initTop();

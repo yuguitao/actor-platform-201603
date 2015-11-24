@@ -4,8 +4,11 @@
 
 package im.actor.core.modules.internal.messages;
 
+import im.actor.core.api.ApiDialog;
+import im.actor.core.api.ApiPeerType;
 import im.actor.core.api.rpc.RequestLoadDialogs;
 import im.actor.core.api.rpc.ResponseLoadDialogs;
+import im.actor.core.entity.PeerType;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.modules.updates.internal.DialogHistoryLoaded;
 import im.actor.core.modules.utils.ModuleActor;
@@ -27,7 +30,8 @@ public class DialogsHistoryActor extends ModuleActor {
     private boolean historyLoaded;
 
     private boolean isLoading = false;
-
+    int groupLimit = 0;
+    int privteLimit = 0;
     public DialogsHistoryActor(ModuleContext context) {
         super(context);
     }
@@ -37,11 +41,20 @@ public class DialogsHistoryActor extends ModuleActor {
         historyMaxDate = preferences().getLong(KEY_LOADED_DATE, Long.MAX_VALUE);
         historyLoaded = preferences().getBool(KEY_LOADED, false);
         if (!preferences().getBool(KEY_LOADED_INIT, false)) {
-            self().sendOnce(new LoadMore());
+            self().sendOnce(new LoadMore(true));
+            self().sendOnce(new LoadMore(false));
         }
     }
 
-    private void onLoadMore() {
+    private void onLoadMore(boolean isGroup, boolean increment) {
+        if (increment) {
+            if (isGroup) {
+                groupLimit = LIMIT;
+            } else {
+                privteLimit = LIMIT;
+            }
+        }
+
         if (historyLoaded) {
             return;
         }
@@ -56,7 +69,15 @@ public class DialogsHistoryActor extends ModuleActor {
                 new RpcCallback<ResponseLoadDialogs>() {
                     @Override
                     public void onResult(ResponseLoadDialogs response) {
-
+                        groupLimit -= response.getGroups().size();
+                        for (ApiDialog dialog : response.getDialogs()) {
+                            if (dialog.getPeer().getType() == ApiPeerType.PRIVATE) {
+                                privteLimit--;
+                            }
+                        }
+                        if (privteLimit > 0 || groupLimit > 0) {
+                            self().sendOnce(new LoadMore(false, false));
+                        }
                         // Invoke on sequence actor
                         updates().onUpdateReceived(new DialogHistoryLoaded(response));
                     }
@@ -90,7 +111,7 @@ public class DialogsHistoryActor extends ModuleActor {
     @Override
     public void onReceive(Object message) {
         if (message instanceof LoadMore) {
-            onLoadMore();
+            onLoadMore(((LoadMore) message).isGroup(), ((LoadMore) message).isIncrement());
         } else if (message instanceof LoadedMore) {
             LoadedMore loaded = (LoadedMore) message;
             onLoadedMore(loaded.loaded, loaded.maxLoadedDate);
@@ -100,7 +121,26 @@ public class DialogsHistoryActor extends ModuleActor {
     }
 
     public static class LoadMore {
+        private boolean isGroup;
+        private boolean increment;
 
+        public LoadMore(boolean isGroup, boolean increment) {
+            this.isGroup = isGroup;
+            this.increment = increment;
+        }
+
+        public LoadMore(boolean isGroup) {
+            this.isGroup = isGroup;
+            this.increment = true;
+        }
+
+        public boolean isIncrement() {
+            return increment;
+        }
+
+        public boolean isGroup() {
+            return isGroup;
+        }
     }
 
     public static class LoadedMore {

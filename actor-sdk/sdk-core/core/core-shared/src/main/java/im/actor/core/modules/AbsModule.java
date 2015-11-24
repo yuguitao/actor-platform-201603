@@ -21,7 +21,8 @@ import im.actor.runtime.storage.PreferencesStorage;
 
 public abstract class AbsModule {
 
-    public static final String STORAGE_DIALOGS = "dialogs";
+    public static final String STORAGE_GROUP_DIALOGS = "group_dialogs";
+    public static final String STORAGE_CONTACTS_DIALOGS = "contacts_dialogs";
     public static final String STORAGE_DIALOGS_DESC = "dialogs_desc";
     public static final String STORAGE_USERS = "users";
     public static final String STORAGE_GROUPS = "groups";

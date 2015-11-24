@@ -39,6 +39,7 @@ import im.actor.sdk.controllers.fragment.compose.ComposeActivity;
 import im.actor.sdk.controllers.fragment.compose.CreateGroupActivity;
 import im.actor.sdk.controllers.fragment.contacts.ContactsFragment;
 import im.actor.sdk.controllers.fragment.dialogs.DialogsFragment;
+import im.actor.sdk.controllers.fragment.dialogs.PrivateDialogsFragment;
 import im.actor.sdk.controllers.fragment.help.HelpActivity;
 import im.actor.sdk.controllers.fragment.main.SearchAdapter;
 import im.actor.sdk.controllers.fragment.settings.MyProfileActivity;
@@ -578,7 +579,7 @@ public class MainPhoneController extends MainBaseController {
                     res1.setHasOptionsMenu(false);
                     return res1;
                 case 1:
-                    ContactsFragment res2 = new ContactsFragment();
+                    PrivateDialogsFragment res2 = new PrivateDialogsFragment();
                     res2.setHasOptionsMenu(false);
                     return res2;
 
