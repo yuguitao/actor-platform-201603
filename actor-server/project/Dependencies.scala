@@ -43,6 +43,8 @@ object Dependencies {
     val akkaPersistenceJdbc     = "com.github.dnvriend"           %% "akka-persistence-jdbc"         % "1.2.1"
     val apacheEmail             = "org.apache.commons"            %  "commons-email"                 % "1.4"
 
+    val betterFiles             = "com.github.pathikrit"          %% "better-files"                  % "2.13.0"
+
     val concmap                 = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
     val caffeine                = "com.github.ben-manes.caffeine" %  "caffeine"                      % "1.2.0"
 
@@ -156,6 +158,7 @@ object Dependencies {
     akkaDdata,
     amazonaws,
     awsWrap,
+    betterFiles,
     caffeine,
     gcmServer,
     pushy,

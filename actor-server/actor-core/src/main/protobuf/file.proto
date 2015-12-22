@@ -26,3 +26,9 @@ message S3UploadKey {
     option (scalapb.message).extends = "im.actor.server.file.UploadKey";
     required string key = 1;
 }
+
+message LocalUploadKey {
+    option (scalapb.message).extends = "im.actor.server.file.UploadKey";
+
+    required string key = 1;
+}
