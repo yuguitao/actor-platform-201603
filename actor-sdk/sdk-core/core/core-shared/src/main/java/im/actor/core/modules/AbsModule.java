@@ -27,6 +27,7 @@ public abstract class AbsModule {
     public static final String STORAGE_DIALOGS_DESC = "dialogs_desc";
     public static final String STORAGE_USERS = "users";
     public static final String STORAGE_STICKER_PACKS = "sticker_packs";
+    public static final String STORAGE_STICKERS = "stickers";
     public static final String STORAGE_STICKER_ALL_PACKS = "sticker_all_packs";
     public static final String STORAGE_GROUPS = "groups";
     public static final String STORAGE_DOWNLOADS = "downloads";
@@ -68,6 +69,10 @@ public abstract class AbsModule {
 
     public ActorRef dialogsActor() {
         return context().getMessagesModule().getDialogsActor();
+    }
+
+    public ActorRef stickersActor() {
+        return context().getStickersModule().getStickersActor();
     }
 
     public ActorRef dialogsHistoryActor() {

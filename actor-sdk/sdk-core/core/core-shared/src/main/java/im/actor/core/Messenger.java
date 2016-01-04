@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import im.actor.core.api.ApiRawValue;
@@ -31,6 +32,7 @@ import im.actor.core.entity.WebActionDescriptor;
 import im.actor.core.entity.content.FastThumb;
 import im.actor.core.entity.content.JsonContent;
 import im.actor.core.entity.content.internal.Sticker;
+import im.actor.core.entity.content.internal.StickersPack;
 import im.actor.core.entity.signals.AbsSignal;
 import im.actor.core.i18n.I18nEngine;
 import im.actor.core.modules.ModuleContext;
@@ -63,6 +65,7 @@ import im.actor.core.viewmodel.UploadFileVM;
 import im.actor.core.viewmodel.UploadFileVMCallback;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.actors.ActorSystem;
+import im.actor.runtime.json.JSONObject;
 import im.actor.runtime.mvvm.MVVMCollection;
 import im.actor.runtime.mvvm.ValueModel;
 import im.actor.runtime.storage.PreferencesStorage;
@@ -744,10 +747,10 @@ public class Messenger {
     /**
      * Send json message
      *
-     * @param peer    destination peer
+     * @param peer destination peer
      * @param content json content
      */
-    @ObjectiveCName("sendJsonWithPeer:withJson:")
+    @ObjectiveCName("sendCustomJsonMessageWithPeer:withJson:")
     public void sendCustomJsonMessage(@NotNull Peer peer, @NotNull JsonContent content) {
         modules.getMessagesModule().sendJson(peer, content);
     }
@@ -987,48 +990,6 @@ public class Messenger {
     @ObjectiveCName("findAllPhotosWithPeer:")
     public Command<List<MessageSearchEntity>> findAllPhotos(Peer peer) {
         return modules.getSearchModule().findAllPhotos(peer);
-    }
-
-    //////////////////////////////////////
-    //             Calls
-    //////////////////////////////////////
-
-    /**
-     * Command for doing call
-     *
-     * @param uid          user you want to call
-     * @param callCallback ui callback
-     * @return command to execute
-     */
-    @ObjectiveCName("doCallWithUid:withCallback:")
-    public Command<ResponseDoCall> doCall(int uid, CallsModule.CallCallback callCallback) {
-        return modules.getCallsModule().makeCall(uid, callCallback);
-    }
-
-    public void endCall(long callId) {
-        modules.getCallsModule().endCall(callId);
-    }
-
-    /**
-     * Handle call in ui - <b>should<b/> be called, when receiving IncomingCallEvent
-     *
-     * @param callId
-     * @param callback
-     */
-    @ObjectiveCName("handleCallWithCallId:withCallback:")
-    public void handleCall(long callId, CallsModule.CallCallback callback) {
-        modules.getCallsModule().handleCall(callId, callback);
-    }
-
-    /**
-     * Send call signaling
-     *
-     * @param callId call id
-     * @param data   signal object to send
-     */
-    @ObjectiveCName("sendCallSignalWithCallId:withData:")
-    public void sendCallSignal(long callId, AbsSignal data) {
-        modules.getCallsModule().sendSignal(callId, data);
     }
 
     //////////////////////////////////////
@@ -1863,23 +1824,6 @@ public class Messenger {
         modules.getSettingsModule().changeSelectedWallpapper(uri);
     }
 
-    /**
-     * Getting saved sticker packs
-     *
-     * @return list of saved sticker packs Value Models
-     */
-    @ObjectiveCName("getOwnStickerPacksIdsVM")
-    public ValueModel<ArrayList<StickerPackVM>> getOwnStickerPacks() {
-        return modules.getStickersModule().getStickerPacks();
-    }
-
-    /**
-     * Loading sticker packs for current user
-     */
-    @ObjectiveCName("loadStickers")
-    public void loadStickers() {
-        modules.getStickersModule().loadStickers();
-    }
 
     //////////////////////////////////////
     //            Security

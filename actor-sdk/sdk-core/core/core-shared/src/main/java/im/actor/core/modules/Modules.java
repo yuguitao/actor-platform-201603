@@ -176,6 +176,8 @@ public class Modules implements ModuleContext {
         updates.run();
         timing.section("Calls");
         calls.run();
+        timing.section("Stickers");
+        stickers.run();
         timing.end();
 
         messenger.onLoggedIn();
