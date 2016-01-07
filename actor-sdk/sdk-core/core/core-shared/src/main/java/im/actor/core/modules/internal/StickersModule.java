@@ -33,7 +33,7 @@ public class StickersModule extends AbsModule {
     }
 
     public void run() {
-        this.stickersActor = system().actorOf(Props.create(StickersActor.class, new ActorCreator<StickersActor>() {
+        this.stickersActor = system().actorOf(Props.create(new ActorCreator() {
             @Override
             public StickersActor create() {
                 return new StickersActor(context());
