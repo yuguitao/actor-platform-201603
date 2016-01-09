@@ -238,12 +238,16 @@ public class JsMessenger extends Messenger {
 
     private String getSmallAvatarUrl(Avatar avatar) {
         if (avatar != null && avatar.getSmallImage() != null) {
-            return getFileUrl(avatar.getSmallImage().getFileReference());
+            return getSmallAvatarUrl(avatar.getSmallImage().getFileReference());
         }
         return null;
     }
 
     public String getFileUrl(FileReference fileReference) {
         return filesModule.getFileUrl(fileReference.getFileId(), fileReference.getAccessHash());
+    }
+
+    public String getSmallAvatarUrl(FileReference reference) {
+        return filesModule.getSmallAvatarUrl(reference.getFileId(), reference.getAccessHash());
     }
 }

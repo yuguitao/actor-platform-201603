@@ -42,9 +42,12 @@ public class JsFilesModule extends AbsModule {
     private BaseKeyValueEngine<CachedFileUrl> keyValueStorage;
     private HashSet<Long> requestedFiles = new HashSet<Long>();
     private ArrayList<JsFileLoadedListener> listeners = new ArrayList<JsFileLoadedListener>();
+    private JsSmallAvatarFileCache jsSmallAvatarFileCache;
 
     public JsFilesModule(final Modules modules) {
         super(modules);
+
+        jsSmallAvatarFileCache = new JsSmallAvatarFileCache(modules);
 
         urlLoader = system().actorOf(Props.create(FileBinderActor.class, new ActorCreator<FileBinderActor>() {
             @Override
@@ -90,6 +93,17 @@ public class JsFilesModule extends AbsModule {
      */
     public void unregisterListener(JsFileLoadedListener listener) {
         listeners.remove(listener);
+    }
+
+    /**
+     * Getting Small Avatar URL with faster cache
+     *
+     * @param id         file's id
+     * @param accessHash file's access hash
+     * @return Data Url if image is loaded
+     */
+    public String getSmallAvatarUrl(long id, long accessHash) {
+        return jsSmallAvatarFileCache.getSmallAvatar(id, accessHash);
     }
 
     /**

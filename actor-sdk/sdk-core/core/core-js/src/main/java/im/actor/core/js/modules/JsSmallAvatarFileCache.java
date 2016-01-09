@@ -1,5 +1,6 @@
 package im.actor.core.js.modules;
 
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
 import com.google.gwt.typedarrays.shared.TypedArrays;
 import com.google.gwt.typedarrays.shared.Uint8Array;
 
@@ -13,7 +14,10 @@ import im.actor.core.modules.AbsModule;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.network.RpcCallback;
 import im.actor.core.network.RpcException;
+import im.actor.runtime.crypto.Base64Utils;
 import im.actor.runtime.js.fs.JsBlob;
+import im.actor.runtime.js.fs.JsFileLoadedClosure;
+import im.actor.runtime.js.fs.JsFileReader;
 import im.actor.runtime.js.http.JsHttpRequest;
 import im.actor.runtime.js.http.JsHttpRequestHandler;
 
@@ -73,7 +77,20 @@ public class JsSmallAvatarFileCache extends AbsModule {
         request.send();
     }
 
-    private void onAvatarDownloaded(long id, JsBlob blob) {
-        
+    private void onAvatarDownloaded(final long id, JsBlob blob) {
+        JsFileReader fileReader = JsFileReader.create();
+        fileReader.setOnLoaded(new JsFileLoadedClosure() {
+            @Override
+            public void onLoaded(ArrayBuffer message) {
+                Uint8Array array = TypedArrays.createUint8Array(message);
+                byte[] data = new byte[array.length()];
+                for (int i = 0; i < array.length(); i++) {
+                    data[i] = (byte) (array.get(i));
+                }
+                String base64 = Base64Utils.toBase64(data);
+                cachedImages.put(id, "data:image/jpeg;base64," + base64);
+            }
+        });
+        fileReader.readAsArrayBuffer(blob.slice(0, blob.getSize()));
     }
 }
