@@ -8,7 +8,7 @@ import { ActionTypes, AuthSteps } from '../constants/ActorAppConstants';
 
 import ActorClient from '../utils/ActorClient';
 
-import { getIntlData } from '../l18n';
+import { getIntlData } from '../i18n';
 
 let step = AuthSteps.LOGIN_WAIT,
     errors = {

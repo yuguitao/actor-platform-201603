@@ -31,7 +31,7 @@ import Main from '../components/Main.react';
 import DefaultJoinGroup from '../components/JoinGroup.react';
 import DefaultInstall from '../components/Install.react';
 
-import { extendL18n, getIntlData } from '../l18n';
+import { extendL18n, getIntlData } from '../i18n';
 
 const { DefaultRoute, Route, RouteHandler } = Router;
 

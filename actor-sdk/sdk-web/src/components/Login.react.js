@@ -8,6 +8,7 @@ import React, { Component, PropTypes } from 'react';
 import { Container } from 'flux/utils';
 import classnames from 'classnames';
 import { Styles, TextField } from 'material-ui';
+import { injectIntl } from 'react-intl';
 
 import { AuthSteps } from '../constants/ActorAppConstants';
 
@@ -17,9 +18,12 @@ import LoginStore from '../stores/LoginStore';
 
 import ActorTheme from '../constants/ActorTheme';
 
+import BaseComponent from './BaseComponent.react';
+
 const ThemeManager = new Styles.ThemeManager();
 
-class Login extends Component {
+class Login extends BaseComponent {
+    
   constructor(props){
     super(props);
   }
@@ -104,10 +108,6 @@ class Login extends Component {
   handleRestartAuthClick = event => {
     event.preventDefault();
     LoginActionCreators.restartAuth();
-  };
-  
-  getIntlMessage = key => {
-      return key
   };
 
   handleFocus = () => {
