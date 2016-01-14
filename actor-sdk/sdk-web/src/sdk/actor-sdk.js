@@ -13,6 +13,7 @@ import { endpoints } from '../constants/ActorAppConstants'
 import Pace from 'pace';
 
 import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 import Router from 'react-router';
 import IntlProvider from 'react-mixin';
 import Actor from 'actor-js';
@@ -118,25 +119,29 @@ class ActorSDK {
     const Install = this.delegate.components.install || DefaultInstall;
     const JoinGroup = this.delegate.components.joinGroup || DefaultJoinGroup;
     const intlData = getIntlData();
+    
+    ReactDOM.render(<Login/>, appRootElemet);
 
-    const routes = (
-      <Route component={App} name="app" path="/">
-        <Route component={Login} name="login" path="/auth"/>
+    // const routes = (
+    //   <Route component={App} name="app" path="/">
+    //     <Route component={Login} name="login" path="/auth"/>
 
-        <Route component={Main} name="main" path="/im/:id"/>
-        <Route component={JoinGroup} name="join" path="/join/:token"/>
-        <Route component={Deactivated} name="deactivated" path="/deactivated"/>
-        <Route component={Install} name="install" path="/install"/>
+    //     <Route component={Main} name="main" path="/im/:id"/>
+    //     <Route component={JoinGroup} name="join" path="/join/:token"/>
+    //     <Route component={Deactivated} name="deactivated" path="/deactivated"/>
+    //     <Route component={Install} name="install" path="/install"/>
 
-        <IndexRoute component={Main}/>
-      </Route>
-    );
+    //     <IndexRoute component={Main}/>
+    //   </Route>
+    // );
 
-    const router = Router.create(routes, Router.HashLocation);
+    // const router = Router.create(routes, Router.HashLocation);
 
-    RouterContainer.set(router);
+    // RouterContainer.set(router);
 
-    router.run((Root) => React.render(<Root {...intlData} delegate={this.delegate} isExperimental={this.isExperimental}/>, appRootElemet));
+    // router.run((Root) => React.render(<Root {...intlData} delegate={this.delegate} isExperimental={this.isExperimental}/>, appRootElemet));
+
+    
 
     if (window.location.hash !== '#/deactivated') {
       if (LoginStore.isLoggedIn()) {

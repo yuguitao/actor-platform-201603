@@ -105,6 +105,10 @@ class Login extends Component {
     event.preventDefault();
     LoginActionCreators.restartAuth();
   };
+  
+  getIntlMessage = key => {
+      return key
+  };
 
   handleFocus = () => {
     const { step } = this.state;
