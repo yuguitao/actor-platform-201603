@@ -5,8 +5,6 @@
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 //import { Styles, TextField } from 'material-ui';
 //import ActorTheme from '../../constants/ActorTheme';
 
@@ -192,7 +190,5 @@ class EditGroup extends Component {
     }
   }
 }
-
-ReactMixin.onClass(EditGroup, IntlMixin);
 
 export default Container.create(EditGroup, {pure: false});

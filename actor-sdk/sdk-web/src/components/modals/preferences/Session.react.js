@@ -4,8 +4,6 @@
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import PreferencesActionCreators from '../../../actions/PreferencesActionCreators';
 
@@ -73,7 +71,5 @@ class SessionItem extends Component {
     )
   }
 }
-
-ReactMixin.onClass(SessionItem, IntlMixin);
 
 export default Container.create(SessionItem, {pure: false, withProps: true});

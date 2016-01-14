@@ -5,7 +5,6 @@
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
 import classnames from 'classnames';
-import ReactMixin from 'react-mixin';
 import { IntlMixin } from 'react-intl';
 import { dataURItoBlob } from '../../utils/ImageUtils';
 
@@ -310,7 +309,5 @@ class CropAvatarModal extends Component {
     }
   }
 }
-
-ReactMixin.onClass(CropAvatarModal, IntlMixin);
 
 export default Container.create(CropAvatarModal);

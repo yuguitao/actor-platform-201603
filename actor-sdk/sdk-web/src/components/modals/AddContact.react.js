@@ -7,7 +7,6 @@ import React, { Component } from 'react';
 import { Container } from 'flux/utils';
 import classNames from 'classnames';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedMessage } from 'react-intl';
 import { KeyCodes } from '../../constants/ActorAppConstants';
 
@@ -132,7 +131,5 @@ class AddContact extends Component {
     );
   }
 }
-
-ReactMixin.onClass(AddContact, IntlMixin);
 
 export default Container.create(AddContact);

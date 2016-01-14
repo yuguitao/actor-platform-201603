@@ -16,5 +16,7 @@ const l18n = {};
 
 const delegate = new ActorSDKDelegate(components, actions, l18n);
 
+window.Perf = require('react-addons-perf');
+
 const app = new ActorSDK({endpoints, delegate, isExperimental: true});
 app.startApp();

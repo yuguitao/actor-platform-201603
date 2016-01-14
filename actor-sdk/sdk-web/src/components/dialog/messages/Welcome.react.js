@@ -3,8 +3,6 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import ReactMixin from 'react-mixin';
-import { IntlMixin, FormattedHTMLMessage } from 'react-intl'
 import { PeerTypes } from '../../../constants/ActorAppConstants';
 
 import InviteUserActions from '../../../actions/InviteUserActions';
@@ -64,7 +62,5 @@ class Welcome extends Component {
     )
   }
 }
-
-ReactMixin.onClass(Welcome, IntlMixin);
 
 export default Welcome;

@@ -5,8 +5,6 @@
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import ActorClient from '../../utils/ActorClient';
 import { KeyCodes } from '../../constants/ActorAppConstants';
@@ -226,7 +224,5 @@ class MyProfile extends Component {
     }
   }
 }
-
-ReactMixin.onClass(MyProfile, IntlMixin);
 
 export default Container.create(MyProfile, {pure: false});

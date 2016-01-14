@@ -7,8 +7,6 @@ import _ from 'lodash';
 import React, { Component, PropTypes } from 'react';
 import { Container } from 'flux/utils';
 import classnames from 'classnames';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 import { Styles, TextField } from 'material-ui';
 
 import { AuthSteps } from '../constants/ActorAppConstants';
@@ -246,7 +244,5 @@ class Login extends Component {
     );
   }
 }
-
-ReactMixin.onClass(Login, IntlMixin);
 
 export default Container.create(Login, {pure: false});

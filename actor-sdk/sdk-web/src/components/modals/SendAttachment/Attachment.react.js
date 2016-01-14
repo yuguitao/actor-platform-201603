@@ -4,8 +4,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import { KeyCodes } from '../../../constants/ActorAppConstants';
 import humanFileSize from '../../../utils/humanFileSize';
@@ -85,7 +83,5 @@ class Attachment extends Component {
     )
   }
 }
-
-ReactMixin.onClass(Attachment, IntlMixin);
 
 export default Attachment;

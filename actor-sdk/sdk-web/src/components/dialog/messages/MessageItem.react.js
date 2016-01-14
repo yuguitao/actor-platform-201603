@@ -5,8 +5,7 @@
 import { escape } from 'lodash';
 import React, { Component, PropTypes } from 'react';
 import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl'
-import addons from 'react/addons';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import classnames from 'classnames';
 import { escapeWithEmoji } from '../../../utils/EmojiUtils';
 import PeerUtils from '../../../utils/PeerUtils';
@@ -37,8 +36,6 @@ import DefaultContact from './Contact.react';
 import DefaultLocation from './Location.react.js';
 import DefaultModern from './Modern.react.js';
 import DefaultSticker from './Sticker.react.js';
-
-const {addons: { PureRenderMixin }} = addons;
 
 class MessageItem extends Component {
   static propTypes = {
@@ -230,7 +227,6 @@ class MessageItem extends Component {
   }
 }
 
-ReactMixin.onClass(MessageItem, IntlMixin);
 ReactMixin.onClass(MessageItem, PureRenderMixin);
 
 export default MessageItem;

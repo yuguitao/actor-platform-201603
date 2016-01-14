@@ -22,6 +22,7 @@ import Favicon from './common/Favicon.react';
 
 import ModalsWrapper from './modals/ModalsWrapper.react';
 import DropdownWrapper from './common/DropdownWrapper.react';
+import IntlProvider from 'react-intl';
 
 class Main extends Component {
   static contextTypes = {
@@ -93,15 +94,15 @@ class Main extends Component {
     const DialogSection = (typeof delegate.components.dialog == 'function') ? delegate.components.dialog : DefaultDialogSection;
 
     return (
-      <div className="app">
-        <Favicon/>
+        <div className="app">
+            <Favicon/>
 
-        <SidebarSection selectedPeer={peer}/>
-        <DialogSection peer={peer}/>
+            <SidebarSection selectedPeer={peer}/>
+            <DialogSection peer={peer}/>
 
-        <ModalsWrapper/>
-        <DropdownWrapper/>
-      </div>
+            <ModalsWrapper/>
+            <DropdownWrapper/>
+        </div>
     );
   }
 }

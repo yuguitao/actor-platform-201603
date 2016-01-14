@@ -6,10 +6,7 @@ import { assign, forEach } from 'lodash';
 import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import ReactMixin from 'react-mixin';
-import addons from 'react/addons';
-import { IntlMixin } from 'react-intl';
-
-const {addons: { PureRenderMixin }} = addons;
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 import ActorClient from '../../utils/ActorClient';
 import Inputs from '../../utils/Inputs';
@@ -268,7 +265,6 @@ class ComposeSection extends Component {
   }
 }
 
-ReactMixin.onClass(ComposeSection, IntlMixin);
 ReactMixin.onClass(ComposeSection, PureRenderMixin);
 
 export default ComposeSection;

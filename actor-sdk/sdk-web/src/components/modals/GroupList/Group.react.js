@@ -3,7 +3,6 @@
  */
 
 import React, { Component, PropTypes } from 'react';
-import ReactMixin from 'react-mixin';
 import classnames from 'classnames';
 import { IntlMixin } from 'react-intl';
 
@@ -86,7 +85,5 @@ class Group extends Component {
     )
   }
 }
-
-ReactMixin.onClass(Group, IntlMixin);
 
 export default Group;

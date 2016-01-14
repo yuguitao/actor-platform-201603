@@ -7,8 +7,6 @@ import React, { Component } from 'react';
 import { Container } from 'flux/utils';
 import classnames from 'classnames';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import { KeyCodes } from '../../constants/ActorAppConstants';
 
@@ -260,7 +258,5 @@ class PreferencesModal extends Component {
     );
   }
 }
-
-ReactMixin.onClass(PreferencesModal, IntlMixin);
 
 export default Container.create(PreferencesModal);

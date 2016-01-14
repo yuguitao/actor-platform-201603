@@ -3,7 +3,6 @@
  */
 
 import React from 'react';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedMessage } from 'react-intl';
 import confirm from '../../utils/confirm'
 import { escapeWithEmoji } from '../../utils/EmojiUtils'
@@ -118,7 +117,5 @@ class GroupMember extends React.Component {
     );
   };
 }
-
-ReactMixin.onClass(GroupMember, IntlMixin);
 
 export default GroupMember;

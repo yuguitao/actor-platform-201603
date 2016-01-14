@@ -6,7 +6,6 @@ import { map, debounce } from 'lodash';
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedHTMLMessage } from 'react-intl';
 
 import { KeyCodes } from '../../../constants/ActorAppConstants';
@@ -178,7 +177,5 @@ class GroupList extends Component {
     resultsNode.scrollTop = top;
   };
 }
-
-ReactMixin.onClass(GroupList, IntlMixin);
 
 export default Container.create(GroupList, {pure: false});

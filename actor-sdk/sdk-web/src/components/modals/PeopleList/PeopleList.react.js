@@ -6,8 +6,6 @@ import { map, debounce } from 'lodash';
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import { KeyCodes } from '../../../constants/ActorAppConstants';
 
@@ -178,8 +176,6 @@ class PeopleList extends Component {
     )
   }
 }
-
-ReactMixin.onClass(PeopleList, IntlMixin);
 
 export default Container.create(PeopleList, {pure: false});
 

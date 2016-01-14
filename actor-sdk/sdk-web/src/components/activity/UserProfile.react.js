@@ -4,7 +4,6 @@
 
 import { assign } from 'lodash';
 import React, { Component, PropTypes } from 'react';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedMessage } from 'react-intl';
 import classnames from 'classnames';
 import { lightbox } from '../../utils/ImageUtils';
@@ -243,7 +242,5 @@ class UserProfile extends Component {
     );
   }
 }
-
-ReactMixin.onClass(UserProfile, IntlMixin);
 
 export default UserProfile;

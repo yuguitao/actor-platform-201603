@@ -4,8 +4,7 @@
 
 import React, { Component, PropTypes } from 'react';
 import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl'
-import addons from 'react/addons';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 import isInside from '../../../utils/isInside';
 
 import { MessageContentTypes } from '../../../constants/ActorAppConstants';
@@ -15,8 +14,6 @@ import ComposeActionCreators from '../../../actions/ComposeActionCreators';
 import DropdownActionCreators from '../../../actions/DropdownActionCreators';
 
 import UserStore from '../../../stores/UserStore';
-
-const {addons: { PureRenderMixin }} = addons;
 
 class MessageActions extends Component {
   static propTypes = {
@@ -123,7 +120,6 @@ class MessageActions extends Component {
   }
 }
 
-ReactMixin.onClass(MessageActions, IntlMixin);
 ReactMixin.onClass(MessageActions, PureRenderMixin);
 
 export default MessageActions;

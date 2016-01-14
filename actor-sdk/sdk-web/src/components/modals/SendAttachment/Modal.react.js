@@ -7,8 +7,6 @@ import { forEach } from 'lodash';
 import React, { Component, PropTypes } from 'react';
 import { Container } from 'flux/utils';
 import Modal from 'react-modal';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import { KeyCodes } from '../../../constants/ActorAppConstants';
 import humanFileSize from '../../../utils/humanFileSize';
@@ -119,7 +117,5 @@ class SendAttachment extends Component {
     );
   }
 }
-
-ReactMixin.onClass(SendAttachment, IntlMixin);
 
 export default Container.create(SendAttachment, {pure: false});

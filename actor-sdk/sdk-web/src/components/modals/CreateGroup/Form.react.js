@@ -6,7 +6,6 @@ import _ from 'lodash';
 
 import React, { Component, PropTypes } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedMessage } from 'react-intl';
 import { CreateGroupSteps } from '../../../constants/ActorAppConstants';
 
@@ -172,7 +171,5 @@ class CreateGroupForm extends Component {
     return stepForm;
   }
 }
-
-ReactMixin.onClass(CreateGroupForm, IntlMixin);
 
 export default Container.create(CreateGroupForm, {pure: false});

@@ -4,8 +4,6 @@
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 import classnames from 'classnames';
 import ActorClient from '../../utils/ActorClient';
 import { escapeWithEmoji } from '../../utils/EmojiUtils'
@@ -163,7 +161,5 @@ class HeaderSection extends Component {
     }
   }
 }
-
-ReactMixin.onClass(HeaderSection, IntlMixin);
 
 export default Container.create(HeaderSection);

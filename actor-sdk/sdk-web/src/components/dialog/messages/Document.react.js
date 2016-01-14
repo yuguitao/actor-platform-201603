@@ -4,8 +4,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 /**
  * Class that represents a component for display document message content
@@ -56,7 +54,5 @@ class Document extends Component {
     );
   }
 }
-
-ReactMixin.onClass(Document, IntlMixin);
 
 export default Document;

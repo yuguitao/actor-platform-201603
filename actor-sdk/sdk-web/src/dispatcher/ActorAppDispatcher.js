@@ -31,11 +31,11 @@ export function dispatch(type, action = {}) {
     // All data that flows into our application comes in form of actions.
     // Actions are just plain JavaScript objects describing “what happened”.
     // Think of them as newspapers.
-    if (action.error) {
-      console.error(type, action);
-    } else {
-      console.info(type, action);
-    }
+    // if (action.error) {
+    //   console.error(type, action);
+    // } else {
+    //   console.info(type, action);
+    // }
   }
 
   flux.dispatch({type, ...action});

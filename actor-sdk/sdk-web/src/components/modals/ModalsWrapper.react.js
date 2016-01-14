@@ -5,8 +5,6 @@
 import React, { Component } from 'react';
 import classnames from 'classnames';
 import { KeyCodes } from '../../constants/ActorAppConstants';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import ContactActionCreators from '../../actions/ContactActionCreators';
 import GroupListActionCreators from '../../actions/GroupListActionCreators';
@@ -99,7 +97,5 @@ class ModalsWrapper extends Component {
     );
   }
 }
-
-ReactMixin.onClass(ModalsWrapper, IntlMixin);
 
 export default ModalsWrapper;

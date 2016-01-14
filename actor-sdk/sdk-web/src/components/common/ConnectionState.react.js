@@ -4,8 +4,6 @@
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 
 import classnames from 'classnames';
 
@@ -37,7 +35,5 @@ class ConnectionState extends Component {
     )
   }
 }
-
-ReactMixin.onClass(ConnectionState, IntlMixin);
 
 export default Container.create(ConnectionState, {pure: false});

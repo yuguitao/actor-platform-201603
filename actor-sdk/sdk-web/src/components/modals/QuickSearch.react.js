@@ -6,7 +6,6 @@ import { map } from 'lodash';
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
 import { IntlMixin, FormattedHTMLMessage } from 'react-intl';
 import Modal from 'react-modal';
 import classnames from 'classnames';
@@ -213,7 +212,5 @@ class QuickSearch extends Component {
     }
   };
 }
-
-ReactMixin.onClass(QuickSearch, IntlMixin);
 
 export default Container.create(QuickSearch, {pure: false});

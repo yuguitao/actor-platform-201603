@@ -4,7 +4,6 @@
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
 import { IntlMixin } from 'react-intl';
 
 import QuickSearchActionCreators from '../../actions/QuickSearchActionCreators';
@@ -42,7 +41,5 @@ class QuickSearchButton extends Component {
     )
   }
 }
-
-ReactMixin.onClass(QuickSearchButton, IntlMixin);
 
 export default Container.create(QuickSearchButton, {pure: false});

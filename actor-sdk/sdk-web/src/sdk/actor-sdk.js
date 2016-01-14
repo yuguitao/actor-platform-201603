@@ -14,7 +14,7 @@ import Pace from 'pace';
 
 import React, { Component, PropTypes } from 'react';
 import Router from 'react-router';
-import ReactMixin from 'react-mixin';
+import IntlProvider from 'react-mixin';
 import Actor from 'actor-js';
 
 import { IntlMixin } from 'react-intl';
@@ -68,11 +68,9 @@ class App extends Component {
   }
 
   render() {
-    return <RouteHandler/>;
+    return <IntlProvider><RouteHandler/></IntlProvider>;
   }
 }
-
-ReactMixin.onClass(App, IntlMixin);
 
 /** Class represents ActorSKD itself */
 class ActorSDK {
@@ -122,15 +120,15 @@ class ActorSDK {
     const intlData = getIntlData();
 
     const routes = (
-      <Route handler={App} name="app" path="/">
-        <Route handler={Login} name="login" path="/auth"/>
+      <Route component={App} name="app" path="/">
+        <Route component={Login} name="login" path="/auth"/>
 
-        <Route handler={Main} name="main" path="/im/:id"/>
-        <Route handler={JoinGroup} name="join" path="/join/:token"/>
-        <Route handler={Deactivated} name="deactivated" path="/deactivated"/>
-        <Route handler={Install} name="install" path="/install"/>
+        <Route component={Main} name="main" path="/im/:id"/>
+        <Route component={JoinGroup} name="join" path="/join/:token"/>
+        <Route component={Deactivated} name="deactivated" path="/deactivated"/>
+        <Route component={Install} name="install" path="/install"/>
 
-        <DefaultRoute handler={Main}/>
+        <IndexRoute component={Main}/>
       </Route>
     );
 

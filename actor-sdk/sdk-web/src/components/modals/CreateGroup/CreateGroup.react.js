@@ -4,8 +4,6 @@
 
 import React, { Component } from 'react';
 import { Container } from 'flux/utils';
-import ReactMixin from 'react-mixin';
-import { IntlMixin } from 'react-intl';
 import Modal from 'react-modal';
 import { KeyCodes } from '../../../constants/ActorAppConstants';
 
@@ -66,7 +64,5 @@ class CreateGroup extends Component {
     );
   }
 }
-
-ReactMixin.onClass(CreateGroup, IntlMixin);
 
 export default Container.create(CreateGroup);
