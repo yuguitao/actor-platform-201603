@@ -6,27 +6,27 @@ import 'babel-polyfill';
 import '../utils/intl-polyfill';
 import '../workers'
 
+import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
+import { Router, IndexRoute } from 'react-router';
+import { Provider } from 'react-redux';
+
 import RouterContainer from '../utils/RouterContainer';
 import DelegateContainer from '../utils/DelegateContainer';
 import SDKDelegate from './actor-sdk-delegate';
 import { endpoints } from '../constants/ActorAppConstants'
 import Pace from 'pace';
 
-import React, { Component, PropTypes } from 'react';
-import ReactDOM from 'react-dom';
-import Router from 'react-router';
 import IntlProvider from 'react-mixin';
 import Actor from 'actor-js';
 
-import { IntlMixin } from 'react-intl';
 import crosstab from 'crosstab';
 
-import LoginActionCreators from '../actions/LoginActionCreators';
-
-import LoginStore from '../stores/LoginStore';
+import LoginActionCreators from '../components/authentication/LoginActionCreators';
+import LoginStore from '../components/authentication/LoginStore';
 
 import DefaultDeactivated from '../components/Deactivated.react';
-import DefaultLogin from '../components/Login.react';
+import DefaultLogin from '../components/authentication/Login.react';
 import Main from '../components/Main.react';
 import DefaultJoinGroup from '../components/JoinGroup.react';
 import DefaultInstall from '../components/Install.react';
@@ -69,7 +69,10 @@ class App extends Component {
   }
 
   render() {
-    return <IntlProvider><RouteHandler/></IntlProvider>;
+    return 
+        <IntlProvider>
+            <RouteHandler/>
+        </IntlProvider>;
   }
 }
 
@@ -93,47 +96,47 @@ class ActorSDK {
   }
 
   _starter() {
-    const ActorInitEvent = 'concurrentActorInit';
+    // const ActorInitEvent = 'concurrentActorInit';
 
-    if (crosstab.supported) {
-      crosstab.on(ActorInitEvent, (msg) => {
-        if (msg.origin !== crosstab.id && window.location.hash !== '#/deactivated') {
-          window.location.assign('#/deactivated');
-          window.location.reload();
-        }
-      });
-    }
+    // if (crosstab.supported) {
+    //   crosstab.on(ActorInitEvent, (msg) => {
+    //     if (msg.origin !== crosstab.id && window.location.hash !== '#/deactivated') {
+    //       window.location.assign('#/deactivated');
+    //       window.location.reload();
+    //     }
+    //   });
+    // }
 
-    const appRootElemet = document.getElementById('actor-web-app');
+    // const appRootElemet = document.getElementById('actor-web-app');
 
-    if (window.location.hash !== '#/deactivated') {
-      if (crosstab.supported) {
-        crosstab.broadcast(ActorInitEvent, {});
-      }
+    // if (window.location.hash !== '#/deactivated') {
+    //   if (crosstab.supported) {
+    //     crosstab.broadcast(ActorInitEvent, {});
+    //   }
 
-      window.messenger = Actor.create(this.endpoints);
-    }
+    //   window.messenger = Actor.create(this.endpoints);
+    // }
 
-    const Login = this.delegate.components.login || DefaultLogin;
-    const Deactivated = this.delegate.components.deactivated || DefaultDeactivated;
-    const Install = this.delegate.components.install || DefaultInstall;
-    const JoinGroup = this.delegate.components.joinGroup || DefaultJoinGroup;
-    const intlData = getIntlData();
+    // const Login = this.delegate.components.login || DefaultLogin;
+    // const Deactivated = this.delegate.components.deactivated || DefaultDeactivated;
+    // const Install = this.delegate.components.install || DefaultInstall;
+    // const JoinGroup = this.delegate.components.joinGroup || DefaultJoinGroup;
+    // const intlData = getIntlData();
     
-    ReactDOM.render(<Login/>, appRootElemet);
+    ReactDOM.render(<App/>, appRootElemet);
 
-    // const routes = (
-    //   <Route component={App} name="app" path="/">
-    //     <Route component={Login} name="login" path="/auth"/>
+    const routes = (
+      <Route component={App} name="app" path="/">
+        <Route component={DefaultLogin} name="login" path="/auth"/>
 
-    //     <Route component={Main} name="main" path="/im/:id"/>
-    //     <Route component={JoinGroup} name="join" path="/join/:token"/>
-    //     <Route component={Deactivated} name="deactivated" path="/deactivated"/>
-    //     <Route component={Install} name="install" path="/install"/>
+        <Route component={Main} name="main" path="/im/:id"/>
+        <Route component={DefaultJoinGroup} name="join" path="/join/:token"/>
+        <Route component={DefaultDeactivated} name="deactivated" path="/deactivated"/>
+        <Route component={DefaultInstall} name="install" path="/install"/>
 
-    //     <IndexRoute component={Main}/>
-    //   </Route>
-    // );
+        <IndexRoute component={Main}/>
+      </Route>
+    );
 
     // const router = Router.create(routes, Router.HashLocation);
 

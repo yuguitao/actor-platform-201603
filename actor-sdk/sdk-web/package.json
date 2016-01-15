@@ -21,26 +21,21 @@
   },
   "scripts": {
     "deps": "npm install -g babel-cli webpack node-sass gulp eslint",
-
     "clean": "$(npm bin)/rimraf build && $(npm bin)/rimraf publish",
     "lint": "$(npm bin)/eslint src",
-
     "assets:fonts": "$(npm bin)/copyfiles 'assets/fonts/**/*' build",
     "assets:emojis": "$(npm bin)/copyfiles -f 'node_modules/emoji-data/sheet_*_64.png' build/assets/images/emoji",
     "assets:sounds": "$(npm bin)/copyfiles 'assets/sound/**/*' build",
     "assets:images": "$(npm bin)/copyfiles 'assets/images/**.png' build",
     "assets:sprite": "$(npm bin)/svg-sprite -w 24 -h 24 --symbol --symbol-sprite icons --symbol-dest images --dest build/assets assets/images/svg/*.svg",
     "assets": "npm run assets:fonts && npm run assets:emojis && npm run assets:sprite && npm run assets:sounds && npm run assets:images",
-
     "prebuild": "npm run clean && npm run lint && npm run assets",
     "build:babel": "babel src --out-dir build --source-maps",
     "build:sass": "$(npm bin)/node-sass src/styles/index.scss --include-path node_modules -o build/styles --output-style compressed",
     "build": "npm run build:babel && npm run build:sass",
-
     "watch:babel": "babel src --out-dir build --watch --source-maps",
     "watch:sass": "$(npm bin)/node-sass src/styles/index.scss --include-path node_modules -o build/styles --watch",
     "watch": "npm run watch:babel & npm run watch:sass",
-
     "prepare": "npm run build && $(npm bin)/copyfiles './*.js' '.gitignore' '.babelrc' '.eslintrc' 'package.json' './src/**/*' './assets/**/*' './example/**/*' './build/**/*' 'README' publish",
     "start": "npm run clean && npm run build && npm run watch"
   },
@@ -59,9 +54,10 @@
     "classnames": "2.2.3",
     "crosstab": "0.2.12",
     "emoji-data": "github:actorapp/emoji-data.git#develop",
+    "fbjs": "0.6.1",
     "flexboxgrid": "6.3.0",
     "flux": "2.1.1",
-    "fbjs": "0.6.1",
+    "history": "1.17.0",
     "immutable": "3.7.6",
     "intl": "1.0.1",
     "js-emoji": "github:actorapp/js-emoji#develop",
@@ -74,21 +70,20 @@
     "object-assign": "4.0.1",
     "opus-recorder": "github:actorapp/Recorderjs.git",
     "pace": "github:hubspot/pace",
-
     "react": "0.14.6",
-    "react-dom": "0.14.6",
+    "react-addons-css-transition-group": "0.14.6",
     "react-addons-perf": "0.14.6",
     "react-addons-pure-render-mixin": "0.14.6",
-    "react-addons-css-transition-group": "0.14.6",
-    
-    "react-router": "1.0.3",
-    "react-mixin": "3.0.3",
-    "history": "1.17.0",
-    "react-tap-event-plugin": "0.2.1",
-    "react-modal": "0.6.1",
-    "react-scroll": "0.35.0",
+    "react-dom": "0.14.6",
     "react-intl": "2.0.0-pr-3",
-    "react-visibility-sensor": "3.0.0"
+    "react-mixin": "3.0.3",
+    "react-modal": "0.6.1",
+    "react-redux": "4.0.6",
+    "react-router": "1.0.3",
+    "react-scroll": "0.35.0",
+    "react-tap-event-plugin": "0.2.1",
+    "react-visibility-sensor": "3.0.0",
+    "redux": "3.0.5"
   },
   "devDependencies": {
     "autoprefixer-loader": "^3.1.0",
@@ -115,6 +110,7 @@
     "minimist": "^1.1.3",
     "node-sass": "^3.3.3",
     "react-hot-loader": "^1.3.0",
+    "redux-devtools": "^3.0.1",
     "rimraf": "^2.4.4",
     "sass-loader": "^3.1.2",
     "source-map-loader": "^0.1.5",
