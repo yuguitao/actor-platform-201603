@@ -38,7 +38,7 @@ trait Releasing {
     GithubRelease.tag := s"server/v${(version in ThisBuild).value}",
     GithubRelease.releaseAssets := Seq(new File(s"target/universal/actor-${(version in ThisBuild).value}.zip")),
     releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
+      // checkSnapshotDependencies,
       inquireVersions,
       runClean,
       setReleaseVersion,
