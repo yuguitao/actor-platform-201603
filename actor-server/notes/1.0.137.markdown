@@ -1,0 +1,1 @@
+: bug: switched to akka 2.4-SNAPSHOT due to CORS bug
