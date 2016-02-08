@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.PorterDuff;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -41,9 +43,13 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 
+import im.actor.core.AndroidMessenger;
+import im.actor.core.api.rpc.ResponseDoCall;
 import im.actor.core.entity.MentionFilterResult;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerType;
+import im.actor.core.viewmodel.Command;
+import im.actor.core.viewmodel.CommandCallback;
 import im.actor.core.viewmodel.GroupVM;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.Log;
@@ -55,11 +61,13 @@ import im.actor.runtime.actors.messages.PoisonPill;
 import im.actor.sdk.ActorSDK;
 import im.actor.sdk.ActorStyle;
 import im.actor.sdk.R;
+import im.actor.sdk.calls.CallActivity;
 import im.actor.sdk.controllers.Intents;
 import im.actor.sdk.controllers.conversation.mentions.MentionsAdapter;
 import im.actor.sdk.controllers.conversation.messages.AudioHolder;
 import im.actor.sdk.controllers.conversation.messages.MessagesFragment;
 import im.actor.sdk.controllers.fragment.settings.BaseActorChatActivity;
+import im.actor.sdk.core.AndroidCalls;
 import im.actor.sdk.core.audio.VoiceCaptureActor;
 import im.actor.sdk.intents.ActorIntent;
 import im.actor.sdk.util.Randoms;
@@ -1026,6 +1034,10 @@ public class ChatActivity extends ActorEditTextActivity {
             menu.findItem(R.id.leaveGroup).setVisible(false);
         }
 
+        if (getPeer().getPeerType() != PeerType.PRIVATE || !ActorSDK.sharedActor().isCallsEnabled()) {
+            menu.findItem(R.id.call).setVisible(false);
+        }
+
         // Hide unsupported files menu
         menu.findItem(R.id.files).setVisible(false);
 
@@ -1075,7 +1087,20 @@ public class ChatActivity extends ActorEditTextActivity {
         } else if (i == R.id.files) {// startActivity(Intents.openDocs(chatType, chatId, ChatActivity.this));
 
         }
+
+        if (getPeer().getPeerType() == PeerType.PRIVATE && ActorSDK.sharedActor().isCallsEnabled()) {
+            if (item.getItemId() == R.id.call) {
+                startCall();
+            }
+        }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startCall() {
+        Command<ResponseDoCall> cmd = messenger().doCall(peer.getPeerId());
+        execute(cmd, R.string.progress_common);
+
     }
 
     @Override

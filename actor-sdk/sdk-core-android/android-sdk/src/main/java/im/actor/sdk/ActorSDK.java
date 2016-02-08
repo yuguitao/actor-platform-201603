@@ -39,6 +39,7 @@ import im.actor.sdk.controllers.fragment.group.GroupInfoActivity;
 import im.actor.sdk.controllers.fragment.profile.ProfileActivity;
 import im.actor.sdk.controllers.fragment.settings.MyProfileActivity;
 import im.actor.sdk.controllers.fragment.settings.SecuritySettingsActivity;
+import im.actor.sdk.core.AndroidCalls;
 import im.actor.sdk.core.AndroidNotifications;
 import im.actor.sdk.core.AndroidPhoneBook;
 import im.actor.sdk.core.ActorPushManager;
@@ -240,6 +241,11 @@ public class ActorSDK {
         if (customApplicationName != null) {
             builder.setCustomAppName(customApplicationName);
         }
+
+        if(callsEnabled){
+            builder.setWebRTCProvider(new AndroidCalls());
+        }
+
 
         this.messenger = new AndroidMessenger(AndroidContext.getContext(), builder.build());
 
@@ -551,7 +557,6 @@ public class ActorSDK {
      */
     public void setCallsEnabled(boolean callsEnabled) {
         this.callsEnabled = callsEnabled;
-        CallsModule.CALLS_ENABLED = callsEnabled;
     }
 
     /**
