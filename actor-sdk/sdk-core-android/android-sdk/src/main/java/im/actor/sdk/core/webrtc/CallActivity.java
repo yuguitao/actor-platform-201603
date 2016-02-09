@@ -1,10 +1,8 @@
-package im.actor.sdk.calls;
+package im.actor.sdk.core.webrtc;
 
 import android.os.Bundle;
 import android.view.WindowManager;
 
-import im.actor.core.entity.Peer;
-import im.actor.core.entity.PeerType;
 import im.actor.sdk.controllers.activity.BaseFragmentActivity;
 
 /**

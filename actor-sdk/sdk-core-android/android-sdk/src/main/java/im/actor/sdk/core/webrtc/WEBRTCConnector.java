@@ -1,4 +1,4 @@
-package im.actor.sdk.calls;
+package im.actor.sdk.core.webrtc;
 
 import android.app.Activity;
 import android.os.Handler;
@@ -31,18 +31,11 @@ import org.webrtc.VideoTrack;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedList;
-import java.util.concurrent.ConcurrentHashMap;
 
-import im.actor.core.entity.signals.AbsSignal;
-import im.actor.core.entity.signals.AnswerSignal;
-import im.actor.core.entity.signals.CandidateSignal;
-import im.actor.core.entity.signals.OfferSignal;
 import im.actor.runtime.json.JSONArray;
 import im.actor.runtime.json.JSONException;
 import im.actor.runtime.json.JSONObject;
-import im.actor.sdk.core.AndroidCalls;
-
-import static im.actor.sdk.util.ActorSDKMessenger.messenger;
+import im.actor.sdk.core.AndroidWebRTCProvider;
 
 public class WEBRTCConnector {
     public static final String TAG = "WEBRTC";
@@ -57,17 +50,6 @@ public class WEBRTCConnector {
      * flag to store if basic initialization has happened
      */
     private static boolean sInitializedAndroidGlobals;
-    /**
-     * max video bandwidth
-     */
-    int mMaxVideoBW = 75;
-    /**
-     * max audio bandwidth
-     */
-    int mMaxAudioBW = 25;
-    /**
-     * list of the streams
-     */
     /**
      * current call id
      */
@@ -108,7 +90,7 @@ public class WEBRTCConnector {
     MyPcObserver connectionObserver;
     private boolean unpublishing = false;
 
-    VideoStreamsView vsv;
+
     private boolean haveOffer;
     private boolean allowAnswer;
     private String remoteSdp;
@@ -140,7 +122,7 @@ public class WEBRTCConnector {
     private void checkSendOffer(){
         if(offerNeeded && offerReady && !offerSent){
             offerSent = true;
-            AndroidCalls.getController().sendOffer(offer);
+            AndroidWebRTCProvider.getController().sendOffer(offer);
         }
     }
 
@@ -201,7 +183,7 @@ public class WEBRTCConnector {
             } else {
                 getSdpObserver().pc.addIceCandidate(iceCandidate);
             }
-            AndroidCalls.getController().sendCandidate(iceCandidate.sdpMLineIndex, iceCandidate.sdpMid, iceCandidate.sdp);
+            AndroidWebRTCProvider.getController().sendCandidate(iceCandidate.sdpMLineIndex, iceCandidate.sdpMid, iceCandidate.sdp);
             Log.d(TAG, "candidate ->");
 
             if (++candidatesCount == 1) {
@@ -215,9 +197,6 @@ public class WEBRTCConnector {
 
         @Override
         public void onAddStream(final MediaStream media) {
-            if (media.videoTracks.size() == 1) {
-                attachRenderer(media, false);
-            }
             context.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -246,10 +225,9 @@ public class WEBRTCConnector {
      */
     private MediaStream lMS;
 
-    public WEBRTCConnector(final Activity context, CallFragment fragment, VideoStreamsView vsv) {
+    public WEBRTCConnector(final Activity context, CallFragment fragment) {
         this.context = context;
         this.callFragment = fragment;
-        this.vsv = vsv;
 
     }
 
@@ -262,78 +240,10 @@ public class WEBRTCConnector {
                     Logging.Severity.LS_SENSITIVE);
         }
 
-        if (ENABLE_GIST_STUNS_TURNS) {
-            if (ice != null) {
-                JSONArray turns = ice.optJSONArray("turn");
-                if (turns != null) {
-                    JSONObject t;
-                    for (int i = 0; i < turns.length(); i++) {
-                        try {
-                            t = (JSONObject) turns.get(i);
-                            if (t.has("url")) {
-                                iceServers.add(new PeerConnection.IceServer(t.getString("url"), t.optString("login"), t.optString("pass")));
-                                Log.d(TAG, "turn: " + iceServers.get(i).toString());
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+        iceServers.add(new PeerConnection.IceServer("stun:62.4.22.219:3478"));
+        iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=tcp", "actor", "password"));
+        iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=udp", "actor", "password"));
 
-                JSONArray stuns = ice.optJSONArray("stun");
-                if (stuns != null) {
-                    for (int i = 0; i < stuns.length(); i++) {
-                        try {
-                            iceServers.add(new PeerConnection.IceServer((String) stuns.get(i)));
-                            Log.d(TAG, "stun: " + iceServers.get(i + (turns != null ? turns.length() : 0)).toString());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
-
-//        //STUN
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.l.google.com:19302"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun1.l.google.com:19302"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun2.l.google.com:19302"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun3.l.google.com:19302"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun4.l.google.com:19302"));
-//
-//
-//        //New stuns
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.ekiga.net"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.ideasip.com"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.iptel.org"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.schlund.de"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.voiparound.com"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.voipbuster.com"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.voipstunt.com"));
-//        iceServers.add(new PeerConnection.IceServer("stun:stun.voxgratia.org"));
-////        Dead?
-////        iceServers.add(new PeerConnection.IceServer("stun:stun01.sipphone.com"));
-////        iceServers.add(new PeerConnection.IceServer("stun:stun.fwdnet.net"));
-////        iceServers.add(new PeerConnection.IceServer("stun:stun.rixtelecom.se"));
-////        iceServers.add(new PeerConnection.IceServer("stun:stunserver.org"));
-////        iceServers.add(new PeerConnection.IceServer("stun:stun.softjoys.com"));
-////        iceServers.add(new PeerConnection.IceServer("stun:stun.xten.com"));
-//
-//        //TURN
-        if (ENABLE_OUR_TURN) {
-            iceServers.add(new PeerConnection.IceServer("stun:62.4.22.219:3478"));
-            iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=tcp", "actor", "password"));
-            iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=udp", "actor", "password"));
-        }else{
-            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=tcp", "actor", "password"));
-            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=udp", "actor", "password"));
-        }
-//
-//        //New turns
-//        iceServers.add(new PeerConnection.IceServer("turn:numb.viagenie.ca", "webrtc@live.com", "muazkh"));
-////        Dead?
-////        iceServers.add(new PeerConnection.IceServer("turn:192.158.29.39:3478?transport=udp", "28224511:1379330808", "JZEOEt2V3Qb0y27GRntt2u2PAYA="));
-////        iceServers.add(new PeerConnection.IceServer("turn:192.158.29.39:3478?transport=tcp", "28224511:1379330808", "JZEOEt2V3Qb0y27GRntt2u2PAYA="));
 
 
         synchronized (sVcLock) {
@@ -451,29 +361,7 @@ public class WEBRTCConnector {
         throw new RuntimeException("Failed to open capturer");
     }
 
-    // Implementation detail: bridge the VideoRenderer.Callbacks interface to
-    // the
-    // VideoStreamsView implementation.
-    public static class VideoCallbacks implements VideoRenderer.Callbacks {
-        private final VideoStreamsView view;
-        private final String streamId;
 
-        public VideoCallbacks(VideoStreamsView view, String streamId) {
-            this.view = view;
-            this.streamId = streamId;
-        }
-
-
-        @Override
-        public void renderFrame(I420Frame frame) {
-            view.queueFrame(streamId, frame);
-        }
-
-//        @Override
-//        public boolean canApplyRotation() {
-//            return false;
-//        }
-    }
 
     private class WebRtcObserver implements SdpObserver {
 
@@ -512,7 +400,7 @@ public class WEBRTCConnector {
             }
 
             if (!weAreOfferer && localSdpWithIce != null) {
-                AndroidCalls.getController().sendAnswer(localSdpWithIce.description);
+                AndroidWebRTCProvider.getController().sendAnswer(localSdpWithIce.description);
                 Log.d(TAG, "sending answer");
             }
 
@@ -687,7 +575,6 @@ public class WEBRTCConnector {
         observer.getSdpObserver().setPc(pc);
         boolean localStreamAdded = pc.addStream(lMS);
         Log.d(TAG, "localStreamAdded - " + localStreamAdded);
-        attachRenderer(lMS, true);
 
 
         if (weAreOfferer) {
@@ -820,22 +707,7 @@ public class WEBRTCConnector {
     }
 
 
-    public void attachRenderer(MediaStream media, boolean isLocal) {
-        if (VIDEO_ENABLED) {
-            VideoCallbacks videoCallbacks = new VideoCallbacks(vsv, isLocal ? VideoStreamsView.LOCAL_STREAM_ID : VideoStreamsView.REMOTE_STREAM_ID);
-            if (!isLocal) {
-                context.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        callFragment.onConnected();
-                    }
-                });
-            }
 
-            VideoRenderer mRenderer = new VideoRenderer(videoCallbacks);
-            media.videoTracks.get(0).addRenderer(mRenderer);
-        }
-    }
 
     public MediaConstraints makePcConstraints() {
         MediaConstraints pcConstraints = new MediaConstraints();

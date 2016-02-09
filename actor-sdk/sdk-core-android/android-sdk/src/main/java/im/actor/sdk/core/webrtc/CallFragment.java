@@ -1,4 +1,4 @@
-package im.actor.sdk.calls;
+package im.actor.sdk.core.webrtc;
 
 import android.Manifest;
 import android.content.Context;
@@ -28,10 +28,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import im.actor.core.api.rpc.ResponseDoCall;
 import im.actor.core.entity.Peer;
-import im.actor.core.viewmodel.Command;
-import im.actor.core.viewmodel.CommandCallback;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.Log;
 import im.actor.runtime.actors.ActorCreator;
@@ -40,7 +37,7 @@ import im.actor.runtime.actors.ActorSystem;
 import im.actor.runtime.actors.Props;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.fragment.BaseFragment;
-import im.actor.sdk.core.AndroidCalls;
+import im.actor.sdk.core.AndroidWebRTCProvider;
 import im.actor.sdk.core.audio.AndroidPlayerActor;
 import im.actor.sdk.core.audio.AudioPlayerActor;
 import im.actor.sdk.view.avatar.CoverAvatarView;
@@ -63,19 +60,8 @@ public class CallFragment extends BaseFragment {
      * the licode signaling engine
      */
     WEBRTCConnector mConnector = null;
-    /**
-     * the container for all the videos
-     */
-    VideoGridLayout mContainer = null;
-    /**
-     * the video streams view
-     */
-    VideoStreamsView mVsv = null;
-    /**
-     * map of stream id -> video view
-     */
+
     boolean incoming;
-    ConcurrentHashMap<String, VideoStreamPlaceholder> mVideoViews = new ConcurrentHashMap<String, VideoStreamPlaceholder>();
     private Vibrator v;
     private View answerContainer;
     private Ringtone ringtone;
@@ -142,30 +128,10 @@ public class CallFragment extends BaseFragment {
         View mainView = cont.findViewById(R.id.videochat_grid);
         b.setVisibility(View.INVISIBLE);
 
-        mContainer = (VideoGridLayout) mainView
-                .findViewById(R.id.videochat_grid);
-        if (WEBRTCConnector.VIDEO_ENABLED) {
-            mContainer.setCollapsed(false);
-
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                mContainer.setGridDimensions(9, 1);
-            } else {
-                mContainer.setGridDimensions(3, 3);
-            }
 
 
-            mVsv = new VideoStreamsView(this.getActivity());
-            makeVideoView(VideoStreamsView.LOCAL_STREAM_ID);
-//        makeVideoView(VideoStreamsView.REMOTE_STREAM_ID);
-            mContainer.addView(mVsv);
-            mContainer.setVideoElement(mVsv);
-        } else {
-            mContainer.setCollapsed(true);
-            mContainer.setVisibility(View.INVISIBLE);
-        }
 
-
-        mConnector = new WEBRTCConnector(getActivity(), CallFragment.this, mVsv);
+        mConnector = new WEBRTCConnector(getActivity(), CallFragment.this);
 
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED ||
@@ -239,7 +205,7 @@ public class CallFragment extends BaseFragment {
     }
 
     private void onAnswer() {
-        AndroidCalls.getController().answerCall();
+        AndroidWebRTCProvider.getController().answerCall();
         onConnecting();
         answerContainer.setVisibility(View.INVISIBLE);
         if (ringtone != null) {
@@ -350,7 +316,7 @@ public class CallFragment extends BaseFragment {
                 readyToCall = true;
             }
         }
-        AndroidCalls.handleCall(callCallback);
+        AndroidWebRTCProvider.handleCall(callCallback);
 
 
     }
@@ -379,7 +345,7 @@ public class CallFragment extends BaseFragment {
             }
         }
 
-        AndroidCalls.getController().readyForCandidates();
+        AndroidWebRTCProvider.getController().readyForCandidates();
     }
 
 
@@ -490,30 +456,7 @@ public class CallFragment extends BaseFragment {
 
     }
 
-    /**
-     * create or retrieve a display element for given stream - will add this to
-     * the appropriate list and the container element for video streams.
-     *
-     * @param streamId The source of the video data.
-     * @return An existing video display element, or a newly created one.
-     */
-    protected VideoStreamPlaceholder makeVideoView(String streamId) {
-        mVsv.addStream(streamId);
-        if (mVideoViews.containsKey(streamId)) {
-            return mVideoViews.get(streamId);
-        } else if (getActivity() != null) {
-            VideoStreamPlaceholder vsp = new VideoStreamPlaceholder(
-                    getActivity(), mVsv, streamId);
-//            vsp.setOnClickListener(mVsvClickListener);
 
-            mVideoViews.put(streamId, vsp);
-            mContainer.addView(vsp);
-            return vsp;
-        }
-
-        // no activity? this is a dead fragment
-        return null;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -535,25 +478,7 @@ public class CallFragment extends BaseFragment {
     }
 
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (WEBRTCConnector.VIDEO_ENABLED) {
-            mVsv.onPause();
-        }
-//        onCallEnd();
-        // mConnector.onPause();
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (WEBRTCConnector.VIDEO_ENABLED) {
-            mVsv.onResume();
-        }
-        // mConnector.onResume();
-    }
 
     @Override
     public void onDestroy() {

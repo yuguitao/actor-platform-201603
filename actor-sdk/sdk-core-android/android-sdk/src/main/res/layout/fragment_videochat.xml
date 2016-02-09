@@ -76,7 +76,7 @@
             android:src="@drawable/ic_call_white_36dp" />
     </LinearLayout>
 
-    <im.actor.sdk.calls.VideoGridLayout
+    <im.actor.sdk.core.webrtc.VideoGridLayout
         android:visibility="visible"
         android:id="@+id/videochat_grid"
         android:layout_width="match_parent"

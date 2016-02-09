@@ -7,18 +7,20 @@ import im.actor.core.AndroidMessenger;
 import im.actor.core.Messenger;
 import im.actor.core.webrtc.WebRTCController;
 import im.actor.core.webrtc.WebRTCProvider;
-import im.actor.sdk.calls.CallActivity;
-import im.actor.sdk.calls.CallFragment;
+import im.actor.sdk.core.webrtc.CallActivity;
+import im.actor.sdk.core.webrtc.CallFragment;
 
-public class AndroidCalls implements WebRTCProvider {
+public class AndroidWebRTCProvider implements WebRTCProvider {
     static WebRTCController controller;
     AndroidMessenger messenger;
+    private long runningCallId;
+
     static CallFragment.CallCallback callCallback;
 
     @Override
     public void init(Messenger messenger, WebRTCController controller) {
         this.messenger = (AndroidMessenger) messenger;
-        AndroidCalls.controller = controller;
+        AndroidWebRTCProvider.controller = controller;
     }
 
     @Override

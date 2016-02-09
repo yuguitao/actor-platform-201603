@@ -24,7 +24,6 @@ import im.actor.core.DeviceCategory;
 import im.actor.core.PlatformType;
 import im.actor.core.entity.Peer;
 import im.actor.core.events.IncomingCall;
-import im.actor.core.modules.calls.CallsModule;
 import im.actor.runtime.Log;
 import im.actor.runtime.android.view.BindedViewHolder;
 import im.actor.runtime.eventbus.BusSubscriber;
@@ -39,7 +38,7 @@ import im.actor.sdk.controllers.fragment.group.GroupInfoActivity;
 import im.actor.sdk.controllers.fragment.profile.ProfileActivity;
 import im.actor.sdk.controllers.fragment.settings.MyProfileActivity;
 import im.actor.sdk.controllers.fragment.settings.SecuritySettingsActivity;
-import im.actor.sdk.core.AndroidCalls;
+import im.actor.sdk.core.AndroidWebRTCProvider;
 import im.actor.sdk.core.AndroidNotifications;
 import im.actor.sdk.core.AndroidPhoneBook;
 import im.actor.sdk.core.ActorPushManager;
@@ -243,7 +242,7 @@ public class ActorSDK {
         }
 
         if(callsEnabled){
-            builder.setWebRTCProvider(new AndroidCalls());
+            builder.setWebRTCProvider(new AndroidWebRTCProvider());
         }
 
 

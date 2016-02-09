@@ -1,4 +1,4 @@
-package im.actor.sdk.calls;
+package im.actor.sdk.core.webrtc;
 
 import android.content.Context;
 import android.media.AudioManager;

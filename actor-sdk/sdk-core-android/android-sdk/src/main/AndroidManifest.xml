@@ -282,7 +282,7 @@
         </activity>
 
         <activity
-            android:name="im.actor.sdk.calls.CallActivity"
+            android:name=".core.webrtc.CallActivity"
             android:theme="@style/CommonActivityTheme"
             android:launchMode="singleInstance"
             android:screenOrientation="portrait"
