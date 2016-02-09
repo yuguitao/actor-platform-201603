@@ -63,7 +63,7 @@ public class AndroidCalls implements WebRTCProvider {
     public void startCallActivity(long callId, boolean incoming) {
         Context context = messenger.getContext();
         Intent callIntent = new Intent(context, CallActivity.class);
-        callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         callIntent.putExtra("callId", callId);
         callIntent.putExtra("incoming", incoming);
         context.startActivity(callIntent);

@@ -321,14 +321,12 @@ public class WEBRTCConnector {
 //
 //        //TURN
         if (ENABLE_OUR_TURN) {
-            iceServers.add(new PeerConnection.IceServer("stun:turn1.actor.im:443"));
-            iceServers.add(new PeerConnection.IceServer("stun:turn2.actor.im:443"));
-            iceServers.add(new PeerConnection.IceServer("stun:turn3.actor.im:443"));
-            iceServers.add(new PeerConnection.IceServer("turn:turn1.actor.im:443?transport=tcp", "actor", "password"));
-            iceServers.add(new PeerConnection.IceServer("turn:turn2.actor.im:443?transport=tcp", "actor", "password"));
-            iceServers.add(new PeerConnection.IceServer("turn:turn3.actor.im:443?transport=tcp", "actor", "password"));
-//            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=tcp", "actor", "password"));
-//            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=udp", "actor", "password"));
+            iceServers.add(new PeerConnection.IceServer("stun:62.4.22.219:3478"));
+            iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=tcp", "actor", "password"));
+            iceServers.add(new PeerConnection.IceServer("turn:62.4.22.219:3478?transport=udp", "actor", "password"));
+        }else{
+            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=tcp", "actor", "password"));
+            iceServers.add(new PeerConnection.IceServer("turn:85.143.222.137:3478?transport=udp", "actor", "password"));
         }
 //
 //        //New turns
@@ -845,9 +843,9 @@ public class WEBRTCConnector {
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
                 "RtpDataChannels", "true"));
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "EnableDtlsSrtp", "false"));
+                "EnableDtlsSrtp", "true"));
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "DtlsSrtpKeyAgreement", "false"));
+                "DtlsSrtpKeyAgreement", "true"));
         return pcConstraints;
     }
 

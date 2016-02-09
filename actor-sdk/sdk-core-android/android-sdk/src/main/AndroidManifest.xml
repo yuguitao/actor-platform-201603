@@ -284,6 +284,7 @@
         <activity
             android:name="im.actor.sdk.calls.CallActivity"
             android:theme="@style/CommonActivityTheme"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait"
             android:showOnLockScreen="true" />
 
