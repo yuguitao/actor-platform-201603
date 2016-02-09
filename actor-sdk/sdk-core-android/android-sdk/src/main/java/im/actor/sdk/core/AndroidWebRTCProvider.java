@@ -1,5 +1,6 @@
 package im.actor.sdk.core;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
@@ -7,59 +8,62 @@ import im.actor.core.AndroidMessenger;
 import im.actor.core.Messenger;
 import im.actor.core.webrtc.WebRTCController;
 import im.actor.core.webrtc.WebRTCProvider;
+import im.actor.runtime.actors.ActorCreator;
+import im.actor.runtime.actors.ActorRef;
+import im.actor.runtime.actors.ActorSystem;
+import im.actor.runtime.actors.Props;
 import im.actor.sdk.core.webrtc.CallActivity;
 import im.actor.sdk.core.webrtc.CallFragment;
+import im.actor.sdk.core.webrtc.WEBRTCActor;
 
 public class AndroidWebRTCProvider implements WebRTCProvider {
     static WebRTCController controller;
     AndroidMessenger messenger;
     private long runningCallId;
-
-    static CallFragment.CallCallback callCallback;
+    static ActorRef webrtcActor;
 
     @Override
-    public void init(Messenger messenger, WebRTCController controller) {
+    public void init(Messenger messenger, final WebRTCController controller) {
         this.messenger = (AndroidMessenger) messenger;
-        AndroidWebRTCProvider.controller = controller;
+        this.controller = controller;
+
     }
 
     @Override
     public void onIncomingCall(long callId) {
+        runningCallId = callId;
         startCallActivity(callId, true);
     }
 
     @Override
     public void onOutgoingCall(long callId) {
+        runningCallId = callId;
         startCallActivity(callId, false);
     }
 
     @Override
     public void onOfferNeeded(long callId) {
-        callCallback.onOfferNeeded();
+        webrtcActor.send(new WEBRTCActor.OfferNeeded(callId));
     }
 
     @Override
     public void onAnswerReceived(long callId, String offerSDP) {
-        callCallback.onAnswer(callId, offerSDP);
+        webrtcActor.send(new WEBRTCActor.AnswerReceived(callId, offerSDP));
     }
 
     @Override
     public void onOfferReceived(long callId, String offerSDP) {
-        callCallback.onOffer(callId, offerSDP);
+        webrtcActor.send(new WEBRTCActor.OfferReceived(callId, offerSDP));
     }
 
     @Override
     public void onCandidate(long callId, String id, int label, String sdp) {
-        callCallback.onCandidate(callId, id, label, sdp);
+        webrtcActor.send(new WEBRTCActor.Candidate(callId, id, label, sdp));
     }
 
     @Override
     public void onCallEnd(long callId) {
-        callCallback.onCallEnd();
-    }
-
-    public static void handleCall(CallFragment.CallCallback callback) {
-        callCallback = callback;
+        webrtcActor.send(new WEBRTCActor.EndCall(callId));
     }
 
     public void startCallActivity(long callId, boolean incoming) {
@@ -72,7 +76,15 @@ public class AndroidWebRTCProvider implements WebRTCProvider {
         context.startActivity(callIntent);
     }
 
-    public static WebRTCController getController() {
-        return controller;
+    public static void initUsingActivity(final Context context){
+        if(webrtcActor==null){
+            webrtcActor = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
+                @Override
+                public WEBRTCActor create() {
+                    return new WEBRTCActor(controller, context);
+                }
+            }), "actor/webrtc");
+        }
     }
+
 }

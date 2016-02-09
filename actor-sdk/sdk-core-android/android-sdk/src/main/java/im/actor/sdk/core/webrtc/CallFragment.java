@@ -3,7 +3,6 @@ package im.actor.sdk.core.webrtc;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -26,15 +25,18 @@ import org.webrtc.IceCandidate;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 
+import im.actor.core.entity.CallState;
 import im.actor.core.entity.Peer;
+import im.actor.core.viewmodel.CallModel;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.Log;
 import im.actor.runtime.actors.ActorCreator;
 import im.actor.runtime.actors.ActorRef;
 import im.actor.runtime.actors.ActorSystem;
 import im.actor.runtime.actors.Props;
+import im.actor.runtime.mvvm.Value;
+import im.actor.runtime.mvvm.ValueChangedListener;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.fragment.BaseFragment;
 import im.actor.sdk.core.AndroidWebRTCProvider;
@@ -45,31 +47,17 @@ import im.actor.sdk.view.avatar.CoverAvatarView;
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
 import static im.actor.sdk.util.ActorSDKMessenger.users;
 
-/**
- * simple fragment to display two rows of video streams
- */
 public class CallFragment extends BaseFragment {
     private static final int PERMISSIONS_REQUEST_FOR_CALL = 147;
     long callId = -1;
     Peer peer;
-    // TODO replace this with your servers url!
-    /** server url - where to request tokens */
-
-
-    /**
-     * the licode signaling engine
-     */
-    WEBRTCConnector mConnector = null;
 
     boolean incoming;
     private Vibrator v;
     private View answerContainer;
     private Ringtone ringtone;
-    private boolean allowAnswer = false;
-    private boolean permissionsOk = false;
-    private boolean readyToCall = false;
     private ActorRef toneActor;
-
+    private CallModel call;
 
     public CallFragment() {
 
@@ -77,7 +65,8 @@ public class CallFragment extends BaseFragment {
 
     public CallFragment(long callId, boolean incoming) {
         this.callId = callId;
-        this.peer = messenger().getCall(callId).getPeer();
+        this.call = messenger().getCall(callId);
+        this.peer = call.getPeer();
         this.incoming = incoming;
     }
 
@@ -86,11 +75,11 @@ public class CallFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        AndroidWebRTCProvider.initUsingActivity(getActivity());
 
         setHasOptionsMenu(true);
 
-        FrameLayout cont = (FrameLayout) inflater.inflate(R.layout.fragment_videochat, container, false);
-        Button b = (Button) cont.findViewById(R.id.start);
+        FrameLayout cont = (FrameLayout) inflater.inflate(R.layout.fragment_call, container, false);
         v = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
         answerContainer = cont.findViewById(R.id.answer_container);
@@ -117,41 +106,46 @@ public class CallFragment extends BaseFragment {
             }
         });
 
+        //
         //Avatar/Name
+        //
         CoverAvatarView avatarView = (CoverAvatarView) cont.findViewById(R.id.avatar);
         avatarView.setBkgrnd((ImageView) cont.findViewById(R.id.avatar_bgrnd));
 
         final UserVM user = users().get(peer.getPeerId());
         bind(avatarView, user.getAvatar());
         bind((TextView) cont.findViewById(R.id.name), user.getName());
-        ///
-        View mainView = cont.findViewById(R.id.videochat_grid);
-        b.setVisibility(View.INVISIBLE);
 
-
-
-
-        mConnector = new WEBRTCConnector(getActivity(), CallFragment.this);
-
+        //
+        // Check permission
+        //
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WAKE_LOCK) != PackageManager.PERMISSION_GRANTED) {
-            permissionsOk = false;
             Log.d("Permissions", "call - no permission :c");
             CallFragment.this.requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.VIBRATE, Manifest.permission.WAKE_LOCK},
                     PERMISSIONS_REQUEST_FOR_CALL);
 
-        } else {
-            permissionsOk = true;
         }
 
-        startChat();
+        call.getState().subscribe(new ValueChangedListener<CallState>() {
+            @Override
+            public void onChanged(CallState val, Value<CallState> valueModel) {
+                switch (val){
+                    case ENDED:
+                        onCallEnd();
+                        break;
+                    case IN_PROGRESS:
+                        onConnected();
+                        break;
+                }
+            }
+        });
+
         if (incoming) {
             initIncoming();
-        }
-
-        if (permissionsOk) {
-            mConnector.init(null);
+        }else{
+            onConnecting();
         }
 
 
@@ -163,21 +157,11 @@ public class CallFragment extends BaseFragment {
         if (requestCode == PERMISSIONS_REQUEST_FOR_CALL) {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if (!mConnector.isInited()) {
-                    mConnector.init(null);
-                } else {
-                    permissionsOk = true;
-                }
+                //Permission  granted
             } else {
                 messenger().endCall(callId);
             }
         }
-    }
-
-
-    private String readStream(InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
     }
 
     private void initIncoming() {
@@ -205,152 +189,24 @@ public class CallFragment extends BaseFragment {
     }
 
     private void onAnswer() {
-        AndroidWebRTCProvider.getController().answerCall();
+
         onConnecting();
         answerContainer.setVisibility(View.INVISIBLE);
         if (ringtone != null) {
             ringtone.stop();
         }
 
-
-        if (mConnector.isInited()) {
-            mConnector.answer(callId);
-        } else {
-            allowAnswer = true;
-        }
+        messenger().answerCall(callId);
     }
 
     private void onNotAnswer() {
         messenger().endCall(callId);
-        onCallEnd();
     }
 
-
-    ArrayList<String> offers = new ArrayList<String>();
-    ArrayList<String> answers = new ArrayList<String>();
-    ArrayList<IceCandidate> candidates = new ArrayList<IceCandidate>();
-
-    private void startChat() {
-
-        final CallCallback callCallback = new CallCallback() {
-            @Override
-            public void onCallEnd() {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            CallFragment.this.onCallEnd();
-                        }
-                    });
-                }
-
-            }
-
-            @Override
-            public void onAnswer(long callId, final String offerSDP) {
-                if(callId!=CallFragment.this.callId){
-                    return;
-                }
-                if (mConnector.isInited()) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mConnector.onAnswer(offerSDP);
-                        }
-                    });
-                } else {
-                    answers.add(offerSDP);
-                }
-            }
-
-            @Override
-            public void onOffer(long callId, final String offerSDP) {
-                if(callId!=CallFragment.this.callId){
-                    return;
-                }
-                if (mConnector.isInited()) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mConnector.onOffer(offerSDP);
-                        }
-                    });
-                } else {
-                    offers.add(offerSDP);
-                }
-            }
-
-            @Override
-            public void onCandidate(long callId, String id, int label, String sdp) {
-                if(callId!=CallFragment.this.callId){
-                    return;
-                }
-                final IceCandidate candidate = new IceCandidate(id, label, sdp);
-                if (mConnector.isInited()) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mConnector.onCandidate(candidate);
-                        }
-                    });
-                } else {
-                    candidates.add(candidate);
-                }
-            }
-
-
-            @Override
-            public void onOfferNeeded() {
-                mConnector.onOfferNeeded();
-            }
-        };
-
-        if (incoming) {
-            //
-
-        } else {
-            onConnecting();
-            if (mConnector.isInited()) {
-                mConnector.call(callId);
-            } else {
-                readyToCall = true;
-            }
-        }
-        AndroidWebRTCProvider.handleCall(callCallback);
-
-
-    }
-
-
-    public void onConnectorInited() {
-        for (String answer : answers) {
-            mConnector.onAnswer(answer);
-        }
-
-        for (String offer : offers) {
-            mConnector.onOffer(offer);
-        }
-
-        for (IceCandidate candidate: candidates) {
-            mConnector.onCandidate(candidate);
-        }
-
-        if (!incoming) {
-            if (readyToCall) {
-                mConnector.call(callId);
-            }
-        } else {
-            if (allowAnswer) {
-                mConnector.answer(callId);
-            }
-        }
-
-        AndroidWebRTCProvider.getController().readyForCandidates();
-    }
-
-
+    //
+    // Vibrate/tone/wakelock
+    //
     boolean vibrate = true;
-
     private PowerManager powerManager;
     private PowerManager.WakeLock wakeLock;
     private int field = 0x00000020;
@@ -451,43 +307,10 @@ public class CallFragment extends BaseFragment {
                 wakeLock.release();
             }
         }
-        mConnector.unpublish();
 
+        getActivity().finish();
 
     }
-
-
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-//		Logging.enableTracing(
-//				"logcat:",
-//				EnumSet.of(Logging.TraceLevel.TRACE_ALL),
-//				Logging.Severity.LS_SENSITIVE);
-    }
-
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        if (mConnector != null) {
-            //TODO kill streams
-        }
-    }
-
-
-
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        if (mConnector != null) {
-        }
-    }
-
 
     private void toastInCenter(String s) {
         Toast t = Toast.makeText(getActivity(),
@@ -496,19 +319,4 @@ public class CallFragment extends BaseFragment {
         t.show();
     }
 
-    public interface VideoCallBack {
-        void onStream();
-    }
-
-    public interface CallCallback {
-        void onCallEnd();
-
-        void onAnswer(long callId, String offerSDP);
-
-        void onOffer(long callId, String offerSDP);
-
-        void onCandidate(long callId, String id, int label, String sdp);
-
-        void onOfferNeeded();
-    }
 }
