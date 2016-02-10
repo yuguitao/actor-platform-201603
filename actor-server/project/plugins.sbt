@@ -5,7 +5,8 @@ resolvers ++= Seq(
   Resolver.url("actor-sbt-plugins", url("https://dl.bintray.com/actor/sbt-plugins"))(Resolver.ivyStylePatterns),
   "Flyway" at "http://flywaydb.org/repo",
   "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com",
-  Classpaths.sbtPluginReleases
+  Classpaths.sbtPluginReleases,
+  Resolver.mavenLocal
 )
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.5")
@@ -35,5 +36,5 @@ addSbtPlugin("im.actor" % "actor-sbt-houserules" % "0.1.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.8")
 
 libraryDependencies ++= Seq(
-  "com.github.os72" % "protoc-jar" % "3.0.0-b2"
+  "com.github.os72" % "protoc-jar" % "3.0.0-b2.1-SNAPSHOT"
 )
