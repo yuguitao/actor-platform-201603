@@ -76,12 +76,13 @@ public class AndroidWebRTCProvider implements WebRTCProvider {
 
     public static void initUsingActivity(final Context context){
         if(webrtcActor==null){
+            ActorSystem.system().addDispatcher("android_calls", true);
             webrtcActor = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
                 @Override
                 public WEBRTCActor create() {
                     return new WEBRTCActor(controller, context);
                 }
-            }), "actor/webrtc");
+            }).changeDispatcher("android_calls"), "actor/webrtc");
         }
     }
 

@@ -73,12 +73,22 @@ public class ActorSystem {
      * @param dispatcherId dispatcher id
      */
     public void addDispatcher(String dispatcherId) {
+        addDispatcher(dispatcherId, false);
+    }
+
+    /**
+     * Adding dispatcher with threads count = {@code Runtime.getRuntime().availableProcessors()}
+     *
+     * @param dispatcherId dispatcher id
+     * @param highPriority use high thread priority
+     */
+    public void addDispatcher(String dispatcherId, boolean highPriority) {
         synchronized (dispatchers) {
             if (dispatchers.containsKey(dispatcherId)) {
                 return;
             }
 
-            ActorDispatcher dispatcher = Runtime.createDefaultDispatcher(dispatcherId, ThreadPriority.LOW, this);
+            ActorDispatcher dispatcher = Runtime.createDefaultDispatcher(dispatcherId, highPriority?ThreadPriority.HIGH:ThreadPriority.LOW, this);
             addDispatcher(dispatcherId, dispatcher);
         }
     }
