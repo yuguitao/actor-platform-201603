@@ -15,7 +15,6 @@ public class CallActivity extends BaseFragmentActivity {
 
         getSupportActionBar().setTitle("Call");
 
-
         if (savedInstanceState == null) {
             boolean incoming = getIntent().getBooleanExtra("incoming", false);
             if (incoming) {

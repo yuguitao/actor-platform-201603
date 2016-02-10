@@ -1,14 +1,20 @@
 package im.actor.sdk.controllers.calls;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -40,6 +46,7 @@ import im.actor.runtime.mvvm.Value;
 import im.actor.runtime.mvvm.ValueChangedListener;
 import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
+import im.actor.sdk.controllers.activity.ActorMainActivity;
 import im.actor.sdk.controllers.fragment.BaseFragment;
 import im.actor.sdk.core.AndroidWebRTCProvider;
 import im.actor.sdk.core.audio.AndroidPlayerActor;
@@ -52,6 +59,8 @@ import static im.actor.sdk.util.ActorSDKMessenger.users;
 
 public class CallFragment extends BaseFragment {
     private static final int PERMISSIONS_REQUEST_FOR_CALL = 147;
+    private static final int NOTIFICATION_ID = 2;
+    private static final int TIMER_ID = 1;
     long callId = -1;
     Peer peer;
 
@@ -63,9 +72,11 @@ public class CallFragment extends BaseFragment {
     private CallModel call;
     private ActorRef timer;
     private TextView timerTV;
+    private NotificationManager manager;
 
     public CallFragment() {
 
+        manager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
     public CallFragment(long callId, boolean incoming) {
@@ -82,7 +93,7 @@ public class CallFragment extends BaseFragment {
 
         AndroidWebRTCProvider.initUsingActivity(getActivity());
 
-        setHasOptionsMenu(true);
+        manager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
         FrameLayout cont = (FrameLayout) inflater.inflate(R.layout.fragment_call, container, false);
         v = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
@@ -149,15 +160,15 @@ public class CallFragment extends BaseFragment {
                         onConnected();
                         startTimer();
                         break;
+                    case CALLING_INCOMING:
+                        initIncoming();
+                        break;
+                    case CALLING_OUTGOING:
+                        onConnecting();
+                        break;
                 }
             }
-        });
-
-        if (incoming) {
-            initIncoming();
-        }else{
-            onConnecting();
-        }
+        }, true);
 
 
         return cont;
@@ -187,7 +198,7 @@ public class CallFragment extends BaseFragment {
                         });
                     }
                 }
-            }));
+            } ,TIMER_ID));
 
         }
     }
@@ -290,7 +301,7 @@ public class CallFragment extends BaseFragment {
 
         toneActor.send(new AndroidPlayerActor.Play(""));
 
-        toastInCenter("conectando...");
+
         vibrate = true;
         new Thread(new Runnable() {
             @Override
@@ -327,7 +338,6 @@ public class CallFragment extends BaseFragment {
         }
         vibrate = false;
         v.cancel();
-        toastInCenter("conectando!");
         v.vibrate(200);
 
     }
@@ -353,7 +363,10 @@ public class CallFragment extends BaseFragment {
             timer.send(PoisonPill.INSTANCE);
         }
 
-        getActivity().finish();
+        manager.cancel(NOTIFICATION_ID);
+        if(getActivity()!=null){
+            getActivity().finish();
+        }
 
     }
 
@@ -364,4 +377,35 @@ public class CallFragment extends BaseFragment {
         t.show();
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(call.getState().get()!=CallState.ENDED){
+            final NotificationCompat.Builder builder = new NotificationCompat.Builder(getActivity());
+            builder.setAutoCancel(true);
+            builder.setSmallIcon(R.drawable.ic_app_notify);
+            builder.setPriority(NotificationCompat.PRIORITY_MAX);
+            builder.setContentTitle(getString(R.string.return_to_call_notification));
+
+            Intent intent = new Intent(getActivity(), CallActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.putExtra("callId", callId);
+            intent.putExtra("incoming", incoming);
+
+            builder.setContentIntent(PendingIntent.getActivity(getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
+            Notification n = builder.build();
+
+            n.flags += Notification.FLAG_ONGOING_EVENT;
+
+
+            manager.notify(NOTIFICATION_ID, n);
+        }
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        manager.cancel(NOTIFICATION_ID);
+    }
 }

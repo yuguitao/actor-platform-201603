@@ -483,6 +483,8 @@
     </string>
     <string name="error_view_url">Unknown URL type</string>
 
+    <!-- Calls -->
+    <string name="return_to_call_notification">Return to call</string>
 
     <string name="messages_action_forward">Forward</string>
     <string name="messages_action_quote">Quote</string>

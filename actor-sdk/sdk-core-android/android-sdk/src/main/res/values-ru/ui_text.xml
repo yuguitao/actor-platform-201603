@@ -464,6 +464,8 @@
     <string name="alert_revoke_integration_token_message">Вы уверены, что хотите отозвать токен?</string>
     <string name="alert_revoke_integration_token_yes">Отозвать</string>
 
+    <!-- Calls -->
+    <string name="return_to_call_notification">Вернуться к звонку</string>
 
     <!-- Errors -->
     <string name="error_connection">Невозможно подключиться к сети. Пожалуйста, проверьте, что вы подключены к интернету и
