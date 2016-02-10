@@ -1,4 +1,4 @@
-package im.actor.sdk.core.webrtc;
+package im.actor.sdk.controllers.calls;
 
 import android.Manifest;
 import android.content.Context;
@@ -14,34 +14,37 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.webrtc.IceCandidate;
-
-import java.io.InputStream;
-import java.util.ArrayList;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 import im.actor.core.entity.CallState;
 import im.actor.core.entity.Peer;
 import im.actor.core.viewmodel.CallModel;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.Log;
+import im.actor.runtime.actors.Actor;
 import im.actor.runtime.actors.ActorCreator;
 import im.actor.runtime.actors.ActorRef;
 import im.actor.runtime.actors.ActorSystem;
 import im.actor.runtime.actors.Props;
+import im.actor.runtime.actors.messages.PoisonPill;
 import im.actor.runtime.mvvm.Value;
 import im.actor.runtime.mvvm.ValueChangedListener;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.fragment.BaseFragment;
 import im.actor.sdk.core.AndroidWebRTCProvider;
 import im.actor.sdk.core.audio.AndroidPlayerActor;
 import im.actor.sdk.core.audio.AudioPlayerActor;
+import im.actor.sdk.core.webrtc.AudioActorEx;
 import im.actor.sdk.view.avatar.CoverAvatarView;
 
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
@@ -58,6 +61,8 @@ public class CallFragment extends BaseFragment {
     private Ringtone ringtone;
     private ActorRef toneActor;
     private CallModel call;
+    private ActorRef timer;
+    private TextView timerTV;
 
     public CallFragment() {
 
@@ -95,14 +100,13 @@ public class CallFragment extends BaseFragment {
         notAnswer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onNotAnswer();
+                doEndCall();
             }
         });
         endCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                messenger().endCall(callId);
-                onCallEnd();
+               doEndCall();
             }
         });
 
@@ -114,7 +118,13 @@ public class CallFragment extends BaseFragment {
 
         final UserVM user = users().get(peer.getPeerId());
         bind(avatarView, user.getAvatar());
-        bind((TextView) cont.findViewById(R.id.name), user.getName());
+
+        TextView nameTV = (TextView) cont.findViewById(R.id.name);
+        nameTV.setTextColor(ActorSDK.sharedActor().style.getProfileTitleColor());
+        bind(nameTV, user.getName());
+
+        timerTV = (TextView) cont.findViewById(R.id.timer);
+        timerTV.setTextColor(ActorSDK.sharedActor().style.getProfileSubtitleColor());
 
         //
         // Check permission
@@ -137,6 +147,7 @@ public class CallFragment extends BaseFragment {
                         break;
                     case IN_PROGRESS:
                         onConnected();
+                        startTimer();
                         break;
                 }
             }
@@ -150,6 +161,35 @@ public class CallFragment extends BaseFragment {
 
 
         return cont;
+    }
+
+    private void startTimer() {
+
+        final DateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        if(timer == null){
+            timer = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
+                @Override
+                public Actor create() {
+                    return new TimerActor(300);
+                }
+            }), "calls/timer");
+
+            timer.send(new TimerActor.Register(new TimerActor.TimerCallback() {
+                @Override
+                public void onTick(long currentTime, final long timeFromRegister) {
+                    if(getActivity()!=null){
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                timerTV.setText(formatter.format(new Date(timeFromRegister)));
+                            }
+                        });
+                    }
+                }
+            }));
+
+        }
     }
 
     @Override
@@ -199,8 +239,9 @@ public class CallFragment extends BaseFragment {
         messenger().answerCall(callId);
     }
 
-    private void onNotAnswer() {
+    private void doEndCall() {
         messenger().endCall(callId);
+        onCallEnd();
     }
 
     //
@@ -306,6 +347,10 @@ public class CallFragment extends BaseFragment {
             if (wakeLock.isHeld()) {
                 wakeLock.release();
             }
+        }
+
+        if(timer!=null){
+            timer.send(PoisonPill.INSTANCE);
         }
 
         getActivity().finish();

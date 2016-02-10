@@ -102,6 +102,7 @@ public class ChatActivity extends ActorEditTextActivity {
     private static final int REQUEST_CONTACT = 5;
     private static final int PERMISSIONS_REQUEST_CAMERA = 6;
     private static final int PERMISSION_REQUEST_RECORD_AUDIO = 7;
+    private static final int PERMISSIONS_REQUEST_FOR_CALL = 8;
     // Peer of current chat
     private Peer peer;
 
@@ -1084,7 +1085,16 @@ public class ChatActivity extends ActorEditTextActivity {
 
         if (getPeer().getPeerType() == PeerType.PRIVATE && ActorSDK.sharedActor().isCallsEnabled()) {
             if (item.getItemId() == R.id.call) {
-                startCall();
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.WAKE_LOCK) != PackageManager.PERMISSION_GRANTED) {
+                    Log.d("Permissions", "call - no permission :c");
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.VIBRATE, Manifest.permission.WAKE_LOCK},
+                            PERMISSIONS_REQUEST_FOR_CALL);
+
+                }else{
+                    startCall();
+                }
             }
         }
 
@@ -1275,6 +1285,11 @@ public class ChatActivity extends ActorEditTextActivity {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCamera();
+            }
+        }else if(requestCode == PERMISSIONS_REQUEST_FOR_CALL){
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCall();
             }
         }
     }

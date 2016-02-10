@@ -1,6 +1,5 @@
 package im.actor.sdk.core;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
@@ -12,8 +11,7 @@ import im.actor.runtime.actors.ActorCreator;
 import im.actor.runtime.actors.ActorRef;
 import im.actor.runtime.actors.ActorSystem;
 import im.actor.runtime.actors.Props;
-import im.actor.sdk.core.webrtc.CallActivity;
-import im.actor.sdk.core.webrtc.CallFragment;
+import im.actor.sdk.controllers.calls.CallActivity;
 import im.actor.sdk.core.webrtc.WEBRTCActor;
 
 public class AndroidWebRTCProvider implements WebRTCProvider {

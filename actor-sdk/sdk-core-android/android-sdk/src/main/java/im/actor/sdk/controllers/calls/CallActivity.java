@@ -1,4 +1,4 @@
-package im.actor.sdk.core.webrtc;
+package im.actor.sdk.controllers.calls;
 
 import android.os.Bundle;
 import android.view.WindowManager;

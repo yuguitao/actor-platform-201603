@@ -38,14 +38,8 @@ public class WEBRTCActor extends Actor {
     private static PeerConnectionFactory sFactory;
     volatile ArrayList<PeerConnection.IceServer> iceServers = new ArrayList<PeerConnection.IceServer>();
     PeerConnectionObserver connectionObserver;
-    private boolean haveOffer;
-    private boolean allowAnswer;
     private String remoteSdp;
     private boolean weAreOfferer = false;
-    private boolean offerNeeded = false;
-    private boolean offerReady = false;
-    private String offer;
-    private LinkedList<IceCandidate> queuedRemoteCandidates;
     private MediaStream lMS;
 
     WebRTCController controller;
@@ -97,13 +91,8 @@ public class WEBRTCActor extends Actor {
 
     public void onCandidate(IceCandidate candidate) {
         Log.d(TAG, "<- candidate");
-
-        if (queuedRemoteCandidates != null) {
-            queuedRemoteCandidates.add(candidate);
-        } else {
-            connectionObserver.getSdpObserver().pc.addIceCandidate(candidate);
-            Log.d(TAG, "add candidate:" + candidate.toString());
-        }
+        connectionObserver.getSdpObserver().pc.addIceCandidate(candidate);
+        Log.d(TAG, "add candidate:" + candidate.toString());
     }
 
 
@@ -129,17 +118,17 @@ public class WEBRTCActor extends Actor {
     public void onOffer(String offer) {
         Log.d(TAG, "onOffer");
         if (!weAreOfferer) {
-            haveOffer = true;
-            this.remoteSdp = offer;
-            if (allowAnswer) {
-                answer(callId);
-            }
+            remoteSdp = offer;
+            connectionObserver = createObserver(false);
+            startReporting();
         } else {
             Log.wtf(TAG, "received offer, but we are offerer");
         }
     }
 
-    public void call(long callId) {
+
+
+    public void onOfferNeeded(long callId) {
         this.callId = callId;
         Log.d(TAG, "doCall");
         connectionObserver = createObserver(true);
@@ -164,21 +153,6 @@ public class WEBRTCActor extends Actor {
                     }
                 }
             }).start();
-        }
-    }
-
-
-
-    public void answer(long callId) {
-
-        this.callId = callId;
-        if (haveOffer) {
-            Log.d(TAG, "doAnswer: haveOffer");
-            connectionObserver = createObserver(false);
-            startReporting();
-        } else {
-            Log.d(TAG, "doAnswer: No offer");
-            allowAnswer = true;
         }
     }
 
@@ -226,13 +200,12 @@ public class WEBRTCActor extends Actor {
         if (connectionObserver == null) {
             return;
         }
-        connectionObserver.getSdpObserver().pc.removeStream(lMS);
-
-        destroy(connectionObserver.getSdpObserver().pc);
-
-        if (lMS != null) {
+        if(lMS!=null){
+            connectionObserver.getSdpObserver().pc.removeStream(lMS);
             lMS.dispose();
         }
+
+        destroy(connectionObserver.getSdpObserver().pc);
 
 
         lMS = null;
@@ -257,9 +230,9 @@ public class WEBRTCActor extends Actor {
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
                 "RtpDataChannels", "true"));
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "EnableDtlsSrtp", "true"));
+                "EnableDtlsSrtp", "false"));
         pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "DtlsSrtpKeyAgreement", "true"));
+                "DtlsSrtpKeyAgreement", "false"));
         return pcConstraints;
     }
 
@@ -319,28 +292,16 @@ public class WEBRTCActor extends Actor {
             Log.d(TAG, "SdpObserver#onSetFailure: " + arg0);
         }
 
-        boolean offerSended = false;
 
         @Override
         public void onSetSuccess() {
             Log.d(TAG, "onSetSuccess");
-            if (pc.getRemoteDescription() != null && queuedRemoteCandidates != null) {
-                for (IceCandidate candidate : queuedRemoteCandidates) {
-                    pc.addIceCandidate(candidate);
-                    Log.d(TAG, "add candidate:" + candidate.toString());
-                }
-                queuedRemoteCandidates = null;
-                controller.readyForCandidates();
-            }
+            controller.readyForCandidates();
 
             if (weAreOfferer) {
-                if (!offerSended && localSdpWithIce != null) {
-                    offerSended = true;
-                    offer = localSdpWithIce.description;
-                    offerReady = true;
-                    controller.sendOffer(offer);
+                if (localSdpWithIce != null) {
+                    controller.sendOffer(localSdpWithIce.description);
                     Log.d(TAG, "sending offer");
-
                 }
             }
 
@@ -412,11 +373,8 @@ public class WEBRTCActor extends Actor {
 
         @Override
         public void onIceCandidate(IceCandidate iceCandidate) {
-            if (queuedRemoteCandidates != null) {
-                queuedRemoteCandidates.add(iceCandidate);
-            } else {
-                getSdpObserver().pc.addIceCandidate(iceCandidate);
-            }
+            getSdpObserver().pc.addIceCandidate(iceCandidate);
+
             controller.sendCandidate(iceCandidate.sdpMLineIndex, iceCandidate.sdpMid, iceCandidate.sdp);
             Log.d(TAG, "candidate ->");
 
@@ -442,14 +400,11 @@ public class WEBRTCActor extends Actor {
     @Override
     public void onReceive(Object message) {
         if(message instanceof OfferNeeded){
-            queuedRemoteCandidates =new LinkedList<IceCandidate>();
             weAreOfferer = true;
-            call(((OfferNeeded) message).getCallId());
+            onOfferNeeded(((OfferNeeded) message).getCallId());
         }else if(message instanceof OfferReceived){
-            queuedRemoteCandidates =new LinkedList<IceCandidate>();
             weAreOfferer = false;
             onOffer(((OfferReceived) message).getOfferSDP());
-            answer(((OfferReceived) message).callId);
         }else if(message instanceof Candidate){
             onCandidate(new IceCandidate(((Candidate) message).getId(), ((Candidate) message).getLabel(), ((Candidate) message).getSdp()));
         }else if(message instanceof AnswerReceived){
