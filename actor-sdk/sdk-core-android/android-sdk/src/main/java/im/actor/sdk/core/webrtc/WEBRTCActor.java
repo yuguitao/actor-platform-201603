@@ -226,13 +226,13 @@ public class WEBRTCActor extends Actor {
 
     public MediaConstraints makePcConstraints() {
         MediaConstraints pcConstraints = new MediaConstraints();
-
-        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "RtpDataChannels", "true"));
-        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "EnableDtlsSrtp", "false"));
-        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
-                "DtlsSrtpKeyAgreement", "false"));
+//
+//        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
+//                "RtpDataChannels", "true"));
+//        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
+//                "EnableDtlsSrtp", "false"));
+//        pcConstraints.optional.add(new MediaConstraints.KeyValuePair(
+//                "DtlsSrtpKeyAgreement", "false"));
         return pcConstraints;
     }
 
