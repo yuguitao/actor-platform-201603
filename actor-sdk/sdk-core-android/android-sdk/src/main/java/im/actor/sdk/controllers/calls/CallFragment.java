@@ -91,7 +91,7 @@ public class CallFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        AndroidWebRTCProvider.initUsingActivity(getActivity());
+
 
         manager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 

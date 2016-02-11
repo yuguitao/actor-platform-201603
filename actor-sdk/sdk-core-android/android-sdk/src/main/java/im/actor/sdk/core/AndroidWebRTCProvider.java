@@ -19,12 +19,23 @@ public class AndroidWebRTCProvider implements WebRTCProvider {
     AndroidMessenger messenger;
     private long runningCallId;
     static ActorRef webrtcActor;
+    private Context context;
+
+    public AndroidWebRTCProvider(Context context) {
+        this.context = context;
+    }
 
     @Override
     public void init(Messenger messenger, final WebRTCController controller) {
         this.messenger = (AndroidMessenger) messenger;
         this.controller = controller;
-
+        ActorSystem.system().addDispatcher("android_calls", true);
+        webrtcActor = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
+            @Override
+            public WEBRTCActor create() {
+                return new WEBRTCActor(controller, context);
+            }
+        }).changeDispatcher("android_calls"), "actor/webrtc");
     }
 
     @Override
@@ -72,18 +83,6 @@ public class AndroidWebRTCProvider implements WebRTCProvider {
         callIntent.putExtra("incoming", incoming);
         context.startActivity(callIntent);
         context.startActivity(callIntent);
-    }
-
-    public static void initUsingActivity(final Context context){
-        if(webrtcActor==null){
-            ActorSystem.system().addDispatcher("android_calls", true);
-            webrtcActor = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
-                @Override
-                public WEBRTCActor create() {
-                    return new WEBRTCActor(controller, context);
-                }
-            }).changeDispatcher("android_calls"), "actor/webrtc");
-        }
     }
 
 }

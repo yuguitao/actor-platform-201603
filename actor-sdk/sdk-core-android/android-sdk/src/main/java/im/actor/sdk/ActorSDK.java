@@ -242,7 +242,7 @@ public class ActorSDK {
         }
 
         if(callsEnabled){
-            builder.setWebRTCProvider(new AndroidWebRTCProvider());
+            builder.setWebRTCProvider(new AndroidWebRTCProvider(AndroidContext.getContext()));
         }
 
 
