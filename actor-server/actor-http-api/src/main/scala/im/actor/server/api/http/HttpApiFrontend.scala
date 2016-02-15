@@ -6,6 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.settings.ServerSettings
+import akka.stream.scaladsl.Sink
 import akka.stream.{ ActorMaterializer, Materializer }
 import com.typesafe.config.Config
 import im.actor.server.api.http.app.AppFilesHttpHandler
@@ -65,11 +66,7 @@ private object HttpApiFrontend {
 
   private val IdleTimeout = 15.minutes
 
-  def start(serverConfig: Config)(
-    implicit
-    system:       ActorSystem,
-    materializer: Materializer
-  ): Unit = {
+  def start(serverConfig: Config)(implicit system: ActorSystem): Unit = {
     HttpApiConfig.load(serverConfig.getConfig("http")) match {
       case Success(apiConfig) ⇒
         val tlsContext = TlsContext.load(serverConfig.getConfig("tls.keystores")).right.toOption
@@ -81,6 +78,7 @@ private object HttpApiFrontend {
 
   def start(config: HttpApiConfig, tlsContext: Option[TlsContext])(implicit system: ActorSystem): Unit = {
     implicit val mat = ActorMaterializer()
+    implicit val ec = system.dispatcher
 
     val status = new StatusHttpHandler
     val app = new AppFilesHttpHandler(config.staticFiles)
@@ -91,14 +89,17 @@ private object HttpApiFrontend {
 
     val defaultSettings = ServerSettings(system)
 
-    Http().bind(
+    val bind = Http().bind(
       config.interface,
       config.port,
       connectionContext = tlsContext map (_.asHttpsContext) getOrElse Http().defaultServerHttpContext,
       settings = defaultSettings.withTimeouts(defaultSettings.timeouts.withIdleTimeout(IdleTimeout))
     )
-      .runForeach { conn ⇒
-        conn handleWith routes
-      }
+
+    system registerOnTermination {
+      bind.to(Sink.ignore).run().flatMap(e ⇒ e.unbind())
+    }
+
+    bind.runForeach { conn ⇒ conn handleWith routes }
   }
 }
