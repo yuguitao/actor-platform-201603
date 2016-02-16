@@ -257,7 +257,10 @@ export default {
           }
         },
         'newDialog': 'create new dialog',
-        'addPeople': 'add people'
+        'addPeople': 'add people',
+        'favourites': 'Favorites',
+        'groups': 'Groups',
+        'privates': 'Privates',
       }
     },
     'main': {

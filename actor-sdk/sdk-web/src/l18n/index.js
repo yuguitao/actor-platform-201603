@@ -44,7 +44,9 @@ export function extendL18n() {
 
 export function getIntlData(locale) {
   const lang = locale ? locale : language;
+  console.debug(lang);
   const currentLanguage = languageData[lang] || languageData[lang.split('-')[0]] || languageData['default']
+  console.debug(currentLanguage);
 
   const flattenMessages = (nestedMessages, prefix = '') => {
     return Object.keys(nestedMessages).reduce((messages, key) => {
