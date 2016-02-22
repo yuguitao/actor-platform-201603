@@ -101,7 +101,14 @@ object Build extends sbt.Build with Versioning with Releasing {
             "-diagrams"
           )
         )
-  ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+  )
+    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
+    .settings(
+      inThisBuild(Seq(
+        trackInternalDependencies := TrackLevel.TrackIfMissing,
+        exportJars := true
+      ))
+    )
     .settings(releaseSettings)
     .dependsOn(actorServerSdk)
     .aggregate(
