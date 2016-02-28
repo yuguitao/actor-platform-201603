@@ -3,21 +3,22 @@ package im.actor.server.webrtc
 import akka.actor._
 import akka.http.scaladsl.util.FastFuture
 import akka.pattern.pipe
-import com.relayrides.pushy.apns.util.{ ApnsPayloadBuilder, SimpleApnsPushNotification }
+import com.relayrides.pushy.apns.util.{ApnsPayloadBuilder, SimpleApnsPushNotification}
 import im.actor.api.rpc._
-import im.actor.api.rpc.messaging.{ ApiServiceExPhoneCall, ApiServiceMessage }
-import im.actor.api.rpc.peers.{ ApiPeer, ApiPeerType }
+import im.actor.api.rpc.messaging.{ApiServiceExPhoneCall, ApiServiceMessage}
+import im.actor.api.rpc.peers.{ApiPeer, ApiPeerType}
 import im.actor.api.rpc.webrtc._
-import im.actor.concurrent.{ ActorStashing, FutureExt }
+import im.actor.concurrent.{ActorStashing, FutureExt}
 import im.actor.server.db.DbExtension
 import im.actor.server.dialog.DialogExtension
-import im.actor.server.eventbus.{ EventBus, EventBusExtension }
+import im.actor.server.eventbus.{EventBus, EventBusExtension}
 import im.actor.server.group.GroupExtension
-import im.actor.server.model.{ Peer, PeerType }
-import im.actor.server.sequence.{ ApplePushExtension, WeakUpdatesExtension }
+import im.actor.server.model.{Peer, PeerType}
+import im.actor.server.sequence.{ApplePushExtension, WeakUpdatesExtension}
 import im.actor.server.user.UserExtension
 import im.actor.server.values.ValuesExtension
 import im.actor.types._
+import scodec.bits.BitVector
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -331,6 +332,7 @@ private final class WebrtcCallActor extends ActorStashing with ActorLogging {
 
                   val instanceCreds = creds flatMap (c ⇒ apnsExt.getVoipInstance(c.apnsKey) map (_ → c))
                   for ((instance, cred) ← instanceCreds) {
+                    log.debug("Sending APNS VoIP push for authId: {}, token: {}", cred.authId, BitVector(cred.token.toByteArray).toHex)
                     val notif = new SimpleApnsPushNotification(cred.token.toByteArray, payload)
                     instance.getQueue.add(notif)
                   }
