@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Actor LLC. <https://actor.im>
+ * Copyright (C) 2016 Actor LLC. <https://actor.im>
  */
 
 import { Store } from 'flux/utils';
@@ -13,10 +13,15 @@ class ArchiveStore extends Store {
     this.isLoading = true;
     this.dialogs = [];
     this.archiveChatState = [];
+    this._isAllLoaded = false;
   }
 
   isArchiveLoading() {
     return this.isLoading;
+  }
+
+  isAllLoaded() {
+    return this._isAllLoaded;
   }
 
   getDialogs() {
@@ -53,9 +58,15 @@ class ArchiveStore extends Store {
         break;
 
       case ActionTypes.ARCHIVE_LOAD_SUCCESS:
-      case ActionTypes.ARCHIVE_LOAD_MORE_SUCCESS:
         this.isLoading = false;
         this.dialogs = action.response;
+        this.__emitChange();
+        break;
+
+      case ActionTypes.ARCHIVE_LOAD_MORE_SUCCESS:
+        this.isLoading = false;
+        this._isAllLoaded = action.response.length === 0;
+        this.dialogs.push.apply(this.dialogs, action.response);
         this.__emitChange();
         break;
 

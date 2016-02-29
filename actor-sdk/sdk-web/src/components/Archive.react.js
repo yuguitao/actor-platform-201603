@@ -2,8 +2,9 @@
  * Copyright (C) 2016 Actor LLC. <https://actor.im>
  */
 
-import { map } from 'lodash';
+import { map, debounce } from 'lodash';
 import React, { Component, PropTypes } from 'react';
+import { findDOMNode } from 'react-dom';
 import { Container } from 'flux/utils';
 import classnames from 'classnames';
 import { Link } from 'react-router';
@@ -26,6 +27,7 @@ class Archive extends Component {
   static calculateState() {
     return {
       isLoading: ArchiveStore.isArchiveLoading(),
+      isAllLoaded: ArchiveStore.isAllLoaded(),
       dialogs: ArchiveStore.getDialogs()
     }
   };
@@ -38,9 +40,30 @@ class Archive extends Component {
     ArchiveActionCreators.loadArchivedDialogs();
   }
 
-  render() {
-    const { isLoading, dialogs } = this.state;
+  loadArchiveByScroll = debounce(() => {
+    const { isAllLoaded, isLoading } = this.state;
+    if (!isLoading) {
+      const scrollNode = findDOMNode(this.refs.archiveScroll);
+      const scrollArea = scrollNode.getElementsByClassName('ss-scrollarea')[0];
+      const scrollContentNode = findDOMNode(this.refs.archiveScrollContent);
+      console.debug('scrollNode', scrollNode.scrollTop, scrollNode.scrollHeight);
+      console.debug('scrollArea', scrollArea.scrollTop, scrollArea.scrollHeight);
+      console.debug('scrollContentNode', scrollContentNode.scrollTop, scrollContentNode.scrollHeight);
+      // console.debug('scrollArea.offsetHeight', scrollArea.offsetHeight);
+      // console.debug('scrollContentNode.scrollHeight', scrollContentNode.scrollHeight);
 
+      if (scrollContentNode.scrollHeight === scrollArea.scrollTop ) {
+        console.debug('load');
+      }
+
+      // if ((scrollContentNode.offsetHeight > scrollNode.offsetHeight) && !isAllLoaded) {
+      //   ArchiveActionCreators.loadMoreArchivedDialogs();
+      // }
+    }
+  }, 5, {maxWait: 30});
+
+  render() {
+    const { isLoading, dialogs, isAllLoaded } = this.state;
     const archiveClassname = classnames('archive-section', {
       'archive-section--loading': isLoading
     });
@@ -49,7 +72,7 @@ class Archive extends Component {
       const { counter, peer } = dialog;
 
       return (
-        <div className="archive-section__list__item col-xs-12 col-sm-6 col-md-4" key={index}>
+        <div className="archive-section__list__item col-xs-12 col-sm-6 col-md-4 col-lg-3" key={index}>
           <Link to={`/im/${peer.peer.key}`} className="archive-item row">
             <div className="archive-item__avatar">
               <AvatarItem image={peer.avatar}
@@ -74,12 +97,13 @@ class Archive extends Component {
       <section className="main">
         <header className="toolbar row">
           <h3>Archive</h3>
+          <button onClick={() => ArchiveActionCreators.loadMoreArchivedDialogs()}>loadMoreArchivedDialogs</button>
         </header>
         <ConnectionState/>
         <div className="flexrow">
           <section className={archiveClassname}>
-            <Scrollbar>
-              <div className="archive-section__list row">
+            <Scrollbar ref="archiveScroll" onScroll={this.loadArchiveByScroll}>
+              <div className="archive-section__list row" ref="archiveScrollContent">
                 {
                   dialogs.length !== 0
                     ? dialogsList
@@ -91,7 +115,7 @@ class Archive extends Component {
                 }
                 {
                   isLoading
-                    ? <div className="archive-section__list__item archive-section__list__item--loading col-xs-12">
+                    ? <div className="archive-section__list__item archive-section__list__item--loading col-xs-12 col-sm-6 col-md-4 col-lg-3">
                         <div className="preloader"><div/><div/><div/><div/><div/></div>
                       </div>
                     : null
