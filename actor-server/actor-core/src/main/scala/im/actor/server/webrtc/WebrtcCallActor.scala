@@ -244,6 +244,8 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
         broadcastSyncedSet()
         sender() ! RejectCallAck
 
+        log.debug("rejected call from userId: {}", userId)
+        log.debug("isConversationStarted: {}, callerUserId: {}", isConversationStarted, callerUserId)
         if ( // If caller changed his mind until anyone picked up
         (!this.isConversationStarted && userId == callerUserId) ||
           // If everyone rejected dialing, there will no any conversation ;(
