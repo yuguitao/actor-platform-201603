@@ -197,21 +197,25 @@ final class EventBusMediator extends Actor with ActorLogging {
     case ConsumerTimedOut(client) ⇒
       disconnect(client)
     case Join(client, timeoutOpt) ⇒
-      val deviceId = Random.nextLong()
+      client.externalAuthId flatMap consumers.byAuthId match {
+        case Some((_, deviceId)) => sender() ! JoinAck(deviceId)
+        case None =>
+          val deviceId = Random.nextLong()
 
-      val update = client match {
-        case ExternalClient(userId, _) ⇒ UpdateEventBusDeviceConnected(id, Some(userId), deviceId)
-        case InternalClient(_)         ⇒ UpdateEventBusDeviceConnected(id, None, deviceId)
+          val update = client match {
+            case ExternalClient(userId, _) ⇒ UpdateEventBusDeviceConnected(id, Some(userId), deviceId)
+            case InternalClient(_)         ⇒ UpdateEventBusDeviceConnected(id, None, deviceId)
+          }
+
+          broadcast(update)
+          this.consumers.actorRefs foreach (_ ! EventBus.Joined(id, client, deviceId))
+          consumers.put(client, deviceId)
+
+          timeoutOpt foreach (consumers.keepAlive(client, _))
+          client.internalActorRef foreach context.watch
+
+          sender() ! JoinAck(deviceId)
       }
-
-      broadcast(update)
-      this.consumers.actorRefs foreach (_ ! EventBus.Joined(id, client, deviceId))
-      consumers.put(client, deviceId)
-
-      timeoutOpt foreach (consumers.keepAlive(client, _))
-      client.internalActorRef foreach context.watch
-
-      sender() ! JoinAck(deviceId)
     case Dispose(client: Client) ⇒
       if (owner.contains(client)) {
         log.debug("Disposing by owner request")

@@ -49,12 +49,12 @@ final class WebrtcExtension(system: ActorSystem) extends Extension {
 
   private[webrtc] val config = WebrtcConfig.load(system.settings.config).get
 
-  def doCall(callerUserId: UserId, callerAuthId: AuthId, peer: Peer): Future[(Long, String, EventBus.DeviceId)] = {
+  def doCall(callerUserId: UserId, callerAuthId: AuthId, peer: Peer, timeout: Option[Long]): Future[(Long, String, EventBus.DeviceId)] = {
     val callId = ThreadLocalRandom.current().nextLong()
 
     (region ? WebrtcCallEnvelope(
       callId,
-      StartCall(callerUserId, callerAuthId, peer)
+      StartCall(callerUserId, callerAuthId, peer, timeout)
     )).mapTo[StartCallAck] map (ack ⇒ (callId, ack.eventBusId, ack.callerDeviceId))
   }
 
