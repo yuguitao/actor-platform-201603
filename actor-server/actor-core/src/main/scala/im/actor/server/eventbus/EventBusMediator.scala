@@ -142,6 +142,7 @@ final class EventBusMediator extends Actor with ActorLogging {
       consumers.put(client, deviceId)
       timeoutOpt foreach (consumers.keepAlive(client, _))
       sender() ! CreateAck(deviceId)
+      client.internalActorRef foreach context.watch
       context become created(deviceId)
     case _ ⇒
       sender() ! Status.Failure(EventBusErrors.EventBusNotFound)
@@ -208,6 +209,8 @@ final class EventBusMediator extends Actor with ActorLogging {
       consumers.put(client, deviceId)
 
       timeoutOpt foreach (consumers.keepAlive(client, _))
+      client foreach context.watch
+
       sender() ! JoinAck(deviceId)
     case Dispose(client: Client) ⇒
       if (owner.contains(client)) {
