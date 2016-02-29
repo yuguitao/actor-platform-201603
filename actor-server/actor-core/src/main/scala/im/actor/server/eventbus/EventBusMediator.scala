@@ -215,10 +215,12 @@ final class EventBusMediator extends Actor with ActorLogging {
         dispose()
       } else sender() ! Status.Failure(new RuntimeException("Attempt to dispose by not an owner"))
     case Terminated(ref) ⇒
+      log.debug("Terminated {}", ref)
       disconnect(InternalClient(ref))
   }
 
   private def disconnect(client: Client) = {
+    log.debug("Disconnecting {}", client)
     if ((owner.isDefined && consumers.owners == Set(client)) || consumers.devices.toSet == Set(client)) {
       log.debug("Disposing as no more clients connected")
       dispose()
