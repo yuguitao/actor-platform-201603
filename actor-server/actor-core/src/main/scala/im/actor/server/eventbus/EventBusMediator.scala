@@ -221,6 +221,8 @@ final class EventBusMediator extends Actor with ActorLogging {
 
   private def disconnect(client: Client) = {
     log.debug("Disconnecting {}", client)
+    log.debug("owner: {}", owner)
+    log.debug("consumers: {}", consumers.owners)
     if ((owner.isDefined && consumers.owners == Set(client)) || consumers.devices.toSet == Set(client)) {
       log.debug("Disposing as no more clients connected")
       dispose()
