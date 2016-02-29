@@ -194,6 +194,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
 
     {
       case JoinCall(userId, authId) ⇒
+        log.debug("joinCall userId: {}, authId: {}", userId, authId)
         val client = EventBus.ExternalClient(userId, authId)
 
         (for {
