@@ -267,6 +267,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
       case ebMessage: EventBus.Message ⇒
         ApiWebRTCSignaling.parseFrom(ebMessage.message).right foreach {
           case msg: ApiAdvertiseSelf ⇒
+            log.debug("advertiseSelf, {}", ebMessage)
             for (deviceId ← ebMessage.deviceId) yield {
               val newDevice = Device(deviceId, ebMessage.client, msg.peerSettings, isJoined = deviceId == callerDeviceId)
               log.debug("newDevice: {}", newDevice)
