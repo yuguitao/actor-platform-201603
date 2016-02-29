@@ -33,7 +33,7 @@ final class WebrtcExtension(system: ActorSystem) extends Extension {
   import im.actor.server.webrtc.WebrtcCallMessages._
   import system.dispatcher
 
-  private implicit val timeout: Timeout = Timeout(ActorConfig.defaultTimeout)
+  private implicit val defaultTimeout: Timeout = Timeout(ActorConfig.defaultTimeout)
 
   private val extractEntityId: ExtractEntityId = {
     case WebrtcCallEnvelope(id, message) ⇒ (id.toString, message)

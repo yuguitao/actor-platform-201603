@@ -198,8 +198,8 @@ final class EventBusMediator extends Actor with ActorLogging {
       disconnect(client)
     case Join(client, timeoutOpt) ⇒
       client.externalAuthId flatMap consumers.byAuthId match {
-        case Some((_, deviceId)) => sender() ! JoinAck(deviceId)
-        case None =>
+        case Some((_, deviceId)) ⇒ sender() ! JoinAck(deviceId)
+        case None ⇒
           val deviceId = Random.nextLong()
 
           val update = client match {
