@@ -127,6 +127,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
         case Res(eventBusId, callees, callerDeviceId) ⇒
           replyTo ! StartCallAck(eventBusId, callerDeviceId)
 
+          log.debug("callerDeviceId: {}", callerDeviceId)
           advertiseMaster(eventBusId, callerDeviceId)
 
           callees foreach (putParticipant(_, ApiCallMemberState.RINGING))
