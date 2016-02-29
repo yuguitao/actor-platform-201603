@@ -298,13 +298,13 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
           case _ ⇒
         }
       case EventBus.Disconnected(_, client, deviceId) ⇒
+        log.debug("Disconnected client: {}, deviceId:  {}", client, deviceId)
+
         removeDevice(deviceId)
         client.externalUserId foreach { userId ⇒
           putParticipant(userId, ApiCallMemberState.ENDED)
           broadcastSyncedSet()
         }
-
-        log.debug("Disconnected client: {}, deviceId:  {}", client, deviceId)
 
         if ((!isConversationStarted && client.externalUserId.contains(callerUserId)) ||
           (isConversationStarted && !devices.exists(_._2.isJoined))) end()
