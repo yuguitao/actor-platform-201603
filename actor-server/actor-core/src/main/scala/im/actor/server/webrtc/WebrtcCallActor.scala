@@ -108,6 +108,8 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
 
   def receive = waitForStart
 
+  // FIXME: set receive timeout
+
   def waitForStart: Receive = {
     case s: StartCall ⇒
       case class Res(eventBusId: String, callees: Seq[Int], callerDeviceId: EventBus.DeviceId)
@@ -210,6 +212,8 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
             val connectedDevices =
               devices.view filterNot (_._1 == device.deviceId) map (_._2) filter (_.isJoined) map {
                 case pairDevice ⇒
+                  log.debug("Connecting with {}", pairDevice)
+
                   val sessionId =
                     sessions.getOrElse(Pair(device.deviceId, pairDevice.deviceId), connect(device, pairDevice))
 
