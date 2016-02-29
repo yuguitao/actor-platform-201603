@@ -148,6 +148,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
     callerUserId:   Int
   ): Receive = {
     def end(): Unit = {
+      log.debug("Ending call")
       val duration = ((System.currentTimeMillis() - startTime) / 1000).toInt
       val randomId = ThreadLocalRandom.current().nextLong()
 
@@ -299,6 +300,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging {
         }
       case EventBus.Disconnected(_, client, deviceId) ⇒
         log.debug("Disconnected client: {}, deviceId:  {}", client, deviceId)
+        log.debug("caller: {}, isConversationStarted: {}", callerUserId, isConversationStarted)
 
         removeDevice(deviceId)
         client.externalUserId foreach { userId ⇒
