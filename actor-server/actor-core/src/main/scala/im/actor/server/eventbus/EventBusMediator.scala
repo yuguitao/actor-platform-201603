@@ -209,7 +209,7 @@ final class EventBusMediator extends Actor with ActorLogging {
       consumers.put(client, deviceId)
 
       timeoutOpt foreach (consumers.keepAlive(client, _))
-      client foreach context.watch
+      client.internalActorRef foreach context.watch
 
       sender() ! JoinAck(deviceId)
     case Dispose(client: Client) ⇒
