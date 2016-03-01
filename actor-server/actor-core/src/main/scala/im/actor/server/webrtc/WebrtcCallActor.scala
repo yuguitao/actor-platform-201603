@@ -394,6 +394,8 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
           }
         }
 
+        log.debug("members {}", getMembers)
+
         if ( // no one have been reached and caller left
         (!isConversationStarted && client.externalUserId.contains(callerUserId)) ||
           // there is no one left who can have a conversation
