@@ -194,7 +194,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
       (for {
         callees ← fetchParticipants(callerUserId, peer) map (_ filterNot (_ == callerUserId))
         eventBusId ← eventBusExt.create(eventBusClient, timeout = None, isOwned = Some(true)) map (_._1)
-        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, s.timeout)
+        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, if (s.nonEmpty) s.timeout else Some(10000))
         _ ← scheduleIncomingCallUpdates(callees)
       } yield Res(eventBusId, callees, callerDeviceId)) pipeTo self
 
@@ -407,6 +407,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
         if (System.currentTimeMillis() - startTime < 30000)
           weakUpdExt.broadcastUserWeakUpdate(userId, UpdateIncomingCall(id), reduceKey = Some(s"call_$id"))
         else {
+          log.debug(s"Auto-rejecting member[userId=$userId] due to timeout")
           cancelIncomingCallUpdates(userId)
           setMemberState(userId, MemberStates.Ended)
           for {
