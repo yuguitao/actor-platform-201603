@@ -194,7 +194,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
       (for {
         callees ← fetchParticipants(callerUserId, peer) map (_ filterNot (_ == callerUserId))
         eventBusId ← eventBusExt.create(eventBusClient, timeout = None, isOwned = Some(true)) map (_._1)
-        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, if (s.nonEmpty) s.timeout else Some(10000))
+        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, if (s.timeout.nonEmpty) s.timeout else Some(10000))
         _ ← scheduleIncomingCallUpdates(callees)
       } yield Res(eventBusId, callees, callerDeviceId)) pipeTo self
 
