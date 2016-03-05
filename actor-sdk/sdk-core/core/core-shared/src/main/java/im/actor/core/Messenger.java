@@ -16,6 +16,7 @@ import im.actor.core.api.ApiRawValue;
 import im.actor.core.api.ApiSex;
 import im.actor.core.api.ApiAuthSession;
 import im.actor.core.api.rpc.ResponseRawRequest;
+import im.actor.core.api.rpc.ResponseSeqDate;
 import im.actor.core.entity.FileReference;
 import im.actor.core.entity.Group;
 import im.actor.core.entity.MentionFilterResult;
@@ -594,6 +595,21 @@ public class Messenger {
     }
 
     /**
+     * Update Message
+     *
+     * @param peer         destination peer
+     * @param text         message text
+     * @param rid          message rundom id
+     *
+     */
+    @ObjectiveCName("updateMessageWithPeer:withText:withRid:")
+    public Command<ResponseSeqDate> updateMessage(@NotNull Peer peer, @NotNull String text, long rid) {
+        return modules.getMessagesModule().updateMessage(peer, text, rid);
+    }
+
+
+
+    /**
      * Send Markdown Message with mentions
      *
      * @param peer        destination peer
@@ -1075,12 +1091,13 @@ public class Messenger {
     /**
      * Checking incoming call from push notification
      *
-     * @param callId Call Id
+     * @param callId  Call Id
+     * @param attempt Call Attempt
      */
-    @ObjectiveCName("checkCall:")
-    public void checkCall(long callId) {
+    @ObjectiveCName("checkCall:withAttempt:")
+    public void checkCall(long callId, int attempt) {
         if (modules.getCallsModule() != null) {
-            modules.getCallsModule().checkCall(callId);
+            modules.getCallsModule().checkCall(callId, attempt);
         }
     }
 

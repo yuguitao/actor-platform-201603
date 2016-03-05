@@ -60,6 +60,7 @@ import im.actor.sdk.view.TintImageView;
 import im.actor.sdk.view.adapters.HolderAdapter;
 import im.actor.sdk.view.adapters.ViewHolder;
 import im.actor.sdk.view.avatar.AvatarView;
+import im.actor.sdk.view.avatar.CallBackgroundAvatarView;
 
 import static im.actor.sdk.util.ActorSDKMessenger.groups;
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
@@ -83,12 +84,18 @@ public class CallFragment extends BaseFragment {
     private NotificationManager manager;
     private CallState currentState;
     private ImageButton endCall;
+    private View endCallContainer;
     private boolean speakerOn = false;
     private AudioManager audioManager;
     private AvatarView avatarView;
     private ListView membersList;
     private CallAvatarLayerAnimator animator;
     private View[] avatarLayers;
+    private View layer1;
+    private View layer2;
+    private View layer3;
+    private ActorRef audioVolumeListener;
+    private AudioStreamVolumeValueActor.VolumeValueListener volumeValueListener;
 
     public CallFragment() {
 
@@ -117,22 +124,30 @@ public class CallFragment extends BaseFragment {
         FrameLayout cont = (FrameLayout) inflater.inflate(R.layout.fragment_call, container, false);
         v = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
 
+        CallBackgroundAvatarView backgroundAvatarView = (CallBackgroundAvatarView) cont.findViewById(R.id.background);
+
 //        animator = new CallAvatarLayerAnimator(cont.findViewById(R.id.layer),
 //                cont.findViewById(R.id.layer1),
 //                cont.findViewById(R.id.layer2),
 //                cont.findViewById(R.id.layer3),
 //                cont.findViewById(R.id.layer4)
 //                );
-        
+
+        layer1 = cont.findViewById(R.id.layer1);
+        layer2 = cont.findViewById(R.id.layer2);
+        layer3 = cont.findViewById(R.id.layer3);
         avatarLayers = new View[]{
-                cont.findViewById(R.id.layer),
-                cont.findViewById(R.id.layer1),
-                cont.findViewById(R.id.layer2),
-                cont.findViewById(R.id.layer3),
-                cont.findViewById(R.id.layer4)
+//                cont.findViewById(R.id.layer),
+                layer1,
+                layer2,
+                layer3,
+//                cont.findViewById(R.id.layer4)
         };
 
-        wave(avatarLayers, 1.1f ,1200, 200);
+        showView(layer1);
+        showView(layer2);
+        showView(layer3);
+        wave(avatarLayers, 1.135f ,1900, -2f);
 
         for (int i = 0; i<avatarLayers.length; i++){
             View layer = avatarLayers[i];
@@ -140,6 +155,7 @@ public class CallFragment extends BaseFragment {
             ((GradientDrawable)layer.getBackground()).setAlpha(50);
         }
 
+        endCallContainer = cont.findViewById(R.id.end_call_container);
         answerContainer = cont.findViewById(R.id.answer_container);
         ImageButton answer = (ImageButton) cont.findViewById(R.id.answer);
         answer.setOnClickListener(new View.OnClickListener() {
@@ -174,10 +190,12 @@ public class CallFragment extends BaseFragment {
         if(peer.getPeerType() == PeerType.PRIVATE){
             UserVM user = users().get(peer.getPeerId());
             avatarView.bind(user);
+            backgroundAvatarView.bind(user);
             bind(nameTV, user.getName());
         }else if(peer.getPeerType() == PeerType.GROUP){
             GroupVM g = groups().get(peer.getPeerId());
             avatarView.bind(g);
+            backgroundAvatarView.bind(g);
             bind(nameTV, g.getName());
         }
 
@@ -231,6 +249,23 @@ public class CallFragment extends BaseFragment {
         }
 
         audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
+
+        audioVolumeListener = ActorSystem.system().actorOf(Props.create(new ActorCreator() {
+            @Override
+            public AudioStreamVolumeValueActor create() {
+                return new AudioStreamVolumeValueActor();
+            }
+        }), "actor/calls/audioVolumeListener");
+
+        volumeValueListener = new AudioStreamVolumeValueActor.VolumeValueListener() {
+            @Override
+            public void onVolumeValue(int val) {
+                Log.d("VOLUME", val + "");
+            }
+        };
+        audioVolumeListener.send(new AudioStreamVolumeValueActor.Subscribe(volumeValueListener));
+
+        audioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
         final TintImageView speaker = (TintImageView) cont.findViewById(R.id.speaker);
         speaker.setResource(R.drawable.ic_volume_up_white_24dp);
         final TextView speakerTV = (TextView) cont.findViewById(R.id.speaker_tv);
@@ -277,12 +312,15 @@ public class CallFragment extends BaseFragment {
             call.getIsMuted().subscribe(new ValueChangedListener<Boolean>() {
                 @Override
                 public void onChanged(Boolean val, Value<Boolean> valueModel) {
-                    if(val){
-                        muteCallTv.setTextColor(getResources().getColor(R.color.picker_grey));
-                        muteCall.setTint(getResources().getColor(R.color.picker_grey));
-                    }else{
-                        muteCallTv.setTextColor(Color.WHITE);
-                        muteCall.setTint(Color.WHITE);
+                    if(getActivity()!=null){
+                        if(val){
+
+                            muteCallTv.setTextColor(getResources().getColor(R.color.picker_grey));
+                            muteCall.setTint(getResources().getColor(R.color.picker_grey));
+                        }else{
+                            muteCallTv.setTextColor(Color.WHITE);
+                            muteCall.setTint(Color.WHITE);
+                        }
                     }
                 }
             });
@@ -315,6 +353,7 @@ public class CallFragment extends BaseFragment {
 
                             case ENDED:
                                 statusTV.setText(R.string.call_ended);
+                                audioVolumeListener.send(new AudioStreamVolumeValueActor.Unsubscribe(volumeValueListener));
                                 onCallEnd();
                                 break;
 
@@ -404,7 +443,7 @@ public class CallFragment extends BaseFragment {
 
     private void initIncoming() {
         answerContainer.setVisibility(View.VISIBLE);
-        endCall.setVisibility(View.INVISIBLE);
+        endCallContainer.setVisibility(View.GONE);
 
         new Thread(new Runnable() {
             @Override
@@ -429,8 +468,8 @@ public class CallFragment extends BaseFragment {
 
     private void onAnswer() {
 
-        endCall.setVisibility(View.VISIBLE);
-        answerContainer.setVisibility(View.INVISIBLE);
+        endCallContainer.setVisibility(View.VISIBLE);
+        answerContainer.setVisibility(View.GONE);
         if (ringtone != null) {
             ringtone.stop();
         }

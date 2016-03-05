@@ -71,6 +71,9 @@ import PushKit
     /// Push token registration id. Required for sending push tokens
     public var apiPushId: Int? = nil
     
+    /// Strategy about authentication
+    public var authStrategy = AAAuthStrategy.PhoneOnly
+    
     /// Enable phone book import
     public var enablePhoneBookImport = true
     
@@ -106,6 +109,7 @@ import PushKit
 
     /// Enable voice calls feature
     public var enableCalls: Bool = true
+    
     
     /// Enable experimental features
     public var enableExperimentalFeatures: Bool = false
@@ -191,6 +195,7 @@ import PushKit
         // Config
         builder.setPhoneBookImportEnabled(jboolean(enablePhoneBookImport))
         builder.setVoiceCallsEnabled(jboolean(enableCalls))
+        builder.setIsEnabledGroupedChatList(false)
         
         // Creating messenger
         messenger = ACCocoaMessenger(configuration: builder.build())
@@ -340,7 +345,11 @@ import PushKit
         if (type == PKPushTypeVoIP) {
             let aps = payload.dictionaryPayload["aps"] as! [NSString: AnyObject]
             if let callId = aps["callId"] as? String {
-                Actor.checkCall(jlong(callId)!)
+                if let attempt = aps["attemptIndex"] as? String {
+                    Actor.checkCall(jlong(callId)!, withAttempt: jint(attempt)!)
+                } else {
+                    Actor.checkCall(jlong(callId)!, withAttempt: 0)
+                }
             }
         }
     }
@@ -424,8 +433,13 @@ import PushKit
         } else {
             var controller: UIViewController! = delegate.actorControllerForAuthStart()
             if controller == nil {
-                //controller = AAAuthNavigationController(rootViewController: AAAuthPhoneViewController())
-                controller = AAAuthNavigationController(rootViewController: AAWelcomeController())
+                if self.authStrategy == .PhoneOnly {
+                    controller = AAAuthNavigationController(rootViewController: AAAuthPhoneViewController())
+                } else if self.authStrategy == .EmailOnly {
+                    controller = AAAuthNavigationController(rootViewController: AAEmailAuthViewController())
+                } else {
+                    // ???
+                }
             }
             window.rootViewController = controller!
         }
@@ -521,7 +535,11 @@ import PushKit
                     let tabBarController = bindedController as! UITabBarController
                     let index = tabBarController.selectedIndex
                     let navController = tabBarController.viewControllers![index] as! UINavigationController
-                    navController.pushViewController(ConversationViewController(peer: ACPeer.groupWithInt(groupId.intValue)), animated: true)
+                    if let customController = ActorSDK.sharedActor().delegate.actorControllerForConversation(ACPeer.groupWithInt(groupId.intValue)) {
+                        navController.pushViewController(customController, animated: true)
+                    } else {
+                        navController.pushViewController(ConversationViewController(peer: ACPeer.groupWithInt(groupId.intValue)), animated: true)
+                    }
                     
                 }, failureBlock: nil)
             })
@@ -744,4 +762,9 @@ public enum AAAutoPush {
     case None
     case FromStart
     case AfterLogin
+}
+
+public enum AAAuthStrategy {
+    case PhoneOnly
+    case EmailOnly
 }

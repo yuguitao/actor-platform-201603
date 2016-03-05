@@ -13,7 +13,8 @@ import im.actor.server.dialog.DialogExtension
 import im.actor.server.eventbus.{ EventBus, EventBusExtension }
 import im.actor.server.group.GroupExtension
 import im.actor.server.model.{ Peer, PeerType }
-import im.actor.server.sequence.{ ApplePushExtension, WeakUpdatesExtension }
+import im.actor.server.push.actor.{ ActorPushMessage, ActorPush }
+import im.actor.server.sequence.{ GooglePushMessage, GooglePushExtension, ApplePushExtension, WeakUpdatesExtension }
 import im.actor.server.user.UserExtension
 import im.actor.server.values.ValuesExtension
 import im.actor.types._
@@ -75,7 +76,7 @@ private trait Members {
     object Ended extends MemberState
   }
 
-  case class Member(userId: UserId, state: MemberState, isJoined: Boolean) {
+  case class Member(userId: UserId, state: MemberState, isJoined: Boolean, callAttempts: Int) {
     import MemberStates._
 
     lazy val apiState = state match {
@@ -87,21 +88,25 @@ private trait Members {
     }
   }
 
-  def addMember(userId: UserId, initState: MemberState, isJoined: Boolean = false): Unit = {
+  def addMember(userId: UserId, initState: MemberState, isJoined: Boolean = false, callAttempts: Int = 1): Unit = {
     members get userId match {
       case Some(_) ⇒ throw new RuntimeException("Attempt to add already existing member")
       case None ⇒
-        val member = Member(userId, initState, isJoined)
+        val member = Member(userId, initState, isJoined, callAttempts)
         log.debug("Adding member: {}", member)
         members += (userId → member)
     }
   }
 
+  def incrementMemberCallAttempt(userId: UserId): Unit =
+    members get userId match {
+      case Some(member) ⇒ members += userId → member.copy(callAttempts = member.callAttempts + 1)
+      case None         ⇒ throw new RuntimeException("Attempt to increment callAttempts of a nonexistent member")
+    }
+
   def setMemberJoined(userId: UserId, isJoined: Boolean = true): Unit =
     members get userId match {
-      case Some(member) if isJoined != member.isJoined ⇒ members += userId → member.copy(isJoined = isJoined)
-      case Some(_) ⇒
-        throw new RuntimeException(s"Attempt to set member joined to $isJoined who is already $isJoined")
+      case Some(member) ⇒ members += userId → member.copy(isJoined = isJoined)
       case None ⇒
         throw new RuntimeException("Attempt to set an unexistent member joined")
     }
@@ -147,6 +152,8 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
   private val groupExt = GroupExtension(context.system)
   private val valuesExt = ValuesExtension(context.system)
   private val apnsExt = ApplePushExtension(context.system)
+  private val gcmExt = GooglePushExtension(context.system)
+  private val actorPush = ActorPush(context.system)
   private val webrtcExt = WebrtcExtension(context.system)
 
   case class Device(
@@ -192,9 +199,9 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
       this.callerUserId = s.callerUserId
 
       (for {
-        callees ← fetchParticipants(callerUserId, peer) map (_ filterNot (_ == callerUserId))
+        callees ← fetchMembers(callerUserId, peer) map (_ filterNot (_ == callerUserId))
         eventBusId ← eventBusExt.create(eventBusClient, timeout = None, isOwned = Some(true)) map (_._1)
-        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, s.timeout)
+        callerDeviceId ← eventBusExt.join(EventBus.ExternalClient(s.callerUserId, s.callerAuthId), eventBusId, if (s.timeout.nonEmpty) s.timeout else Some(10000))
         _ ← scheduleIncomingCallUpdates(callees)
       } yield Res(eventBusId, callees, callerDeviceId)) pipeTo self
 
@@ -273,15 +280,16 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
         val client = EventBus.ExternalClient(userId, authId)
 
         (for {
+          member ← getMember(userId)
           deviceId ← clients get client
           device ← devices get deviceId
-        } yield device) match {
-          case Some(device) ⇒
+        } yield member → device) match {
+          case Some((member, device)) ⇒
             putDevice(device.deviceId, client, device.copy(isJoined = true))
             setMemberJoined(userId)
             cancelIncomingCallUpdates(userId)
 
-            weakUpdExt.broadcastUserWeakUpdate(userId, UpdateCallHandled(id), excludeAuthIds = Set(authId))
+            weakUpdExt.broadcastUserWeakUpdate(userId, UpdateCallHandled(id, Some(member.callAttempts)), excludeAuthIds = Set(authId))
 
             val connectedDevices =
               devices.view filterNot (_._1 == device.deviceId) map (_._2) filter (_.isJoined) map {
@@ -317,21 +325,25 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
             sender() ! Status.Failure(WebrtcCallErrors.NotJoinedToEventBus)
         }
       case RejectCall(userId, authId) ⇒
-        cancelIncomingCallUpdates(userId)
-        setMemberState(userId, MemberStates.Ended)
-        val client = EventBus.ExternalClient(userId, authId)
-        for (deviceId ← clients get client) {
-          clients -= client
-          devices -= deviceId
-        }
-        weakUpdExt.broadcastUserWeakUpdate(userId, UpdateCallHandled(id), excludeAuthIds = Set(authId))
-        broadcastSyncedSet()
-        sender() ! RejectCallAck
+        getMember(userId) match {
+          case Some(member) ⇒
+            cancelIncomingCallUpdates(userId)
+            setMemberState(userId, MemberStates.Ended)
+            val client = EventBus.ExternalClient(userId, authId)
+            for (deviceId ← clients get client) {
+              clients -= client
+              devices -= deviceId
+            }
+            weakUpdExt.broadcastUserWeakUpdate(userId, UpdateCallHandled(id, Some(member.callAttempts)), excludeAuthIds = Set(authId))
+            broadcastSyncedSet()
+            sender() ! RejectCallAck
 
-        if ( // If caller changed his mind until anyone picked up
-        (!this.isConversationStarted && userId == callerUserId) ||
-          // If everyone rejected dialing, there will no any conversation ;(
-          (!this.isConversationStarted && everyoneRejected(callerUserId))) end()
+            if ( // If caller changed his mind until anyone picked up
+            (!this.isConversationStarted && userId == callerUserId) ||
+              // If everyone rejected dialing, there will no any conversation ;(
+              (!this.isConversationStarted && everyoneRejected(callerUserId))) end()
+          case None ⇒ throw new IllegalStateException("Attempted to reject call of a non-existent member")
+        }
       case GetInfo ⇒
         if (peer.typ.isPrivate) {
           sender() ! GetInfoAck(eventBusId, Peer(PeerType.Private, memberUserIds.filterNot(_ == peer.id).head), memberUserIds.toSeq)
@@ -402,15 +414,28 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
         end()
         deleteSyncedSet()
       case SendIncomingCall(userId) ⇒
-        if (System.currentTimeMillis() - startTime < 30000)
-          weakUpdExt.broadcastUserWeakUpdate(userId, UpdateIncomingCall(id), reduceKey = Some(s"call_$id"))
-        else {
-          cancelIncomingCallUpdates(userId)
-          setMemberState(userId, MemberStates.Ended)
-          for {
-            deviceId ← clients.filter(_._1.externalUserId.contains(userId)).map(_._2)
-          } yield removeDevice(deviceId)
-          broadcastSyncedSet()
+        getMember(userId) match {
+          case Some(member) ⇒
+            if (System.currentTimeMillis() - startTime < 30000) {
+              weakUpdExt.broadcastUserWeakUpdate(
+                userId,
+                UpdateIncomingCall(id, Some(member.callAttempts)),
+                reduceKey = Some(s"call_${id}_${member.callAttempts}")
+              )
+            } else {
+              log.debug(s"Auto-rejecting member[userId=$userId] due to timeout")
+              cancelIncomingCallUpdates(userId)
+              weakUpdExt.broadcastUserWeakUpdate(
+                userId,
+                UpdateCallHandled(id, Some(member.callAttempts))
+              )
+              setMemberState(userId, MemberStates.Ended)
+              for {
+                deviceId ← clients.filter(_._1.externalUserId.contains(userId)).values
+              } yield removeDevice(deviceId)
+              broadcastSyncedSet()
+            }
+          case None ⇒ throw new IllegalStateException("Attempted to send incoming call update of a non-existent member")
         }
       case _: StartCall ⇒ sender() ! WebrtcCallErrors.CallAlreadyStarted
     }
@@ -441,7 +466,7 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
       device
     }
 
-  private def fetchParticipants(callerUserId: Int, peer: Peer) =
+  private def fetchMembers(callerUserId: Int, peer: Peer) =
     peer match {
       case Peer(PeerType.Private, userId) ⇒ FastFuture.successful(Seq(callerUserId, userId))
       case Peer(PeerType.Group, groupId)  ⇒ groupExt.getMemberIds(groupId) map (_._1)
@@ -450,17 +475,57 @@ private final class WebrtcCallActor extends StashingActor with ActorLogging with
 
   private def scheduleIncomingCallUpdates(callees: Seq[UserId]): Future[Unit] = {
     for {
-      authIds ← userExt.getAuthIds(callees.toSet)
-      credss ← apnsExt.findVoipCreds(authIds.toSet)
+      authIdsMap ← userExt.getAuthIdsMap(callees.toSet)
+      membersMap = authIdsMap flatMap {
+        case (userId, authIds) ⇒ getMember(userId) map (_ → authIds)
+      }
+      acredsMap ← FutureExt.ftraverse(membersMap.toSeq) {
+        case (member, authIds) ⇒
+          apnsExt.fetchVoipCreds(authIds.toSet) map (member → _)
+      }
+      gcredsMap ← FutureExt.ftraverse(membersMap.toSeq) {
+        case (member, authIds) ⇒
+          gcmExt.fetchCreds(authIds.toSet) map (member → _)
+      }
+      ourCredsMap ← FutureExt.ftraverse(membersMap.toSeq) {
+        case (member, authIds) ⇒
+          actorPush.fetchCreds(member.userId) map (member → _)
+      }
     } yield {
-      credss foreach { creds ⇒
-        val payload = (new ApnsPayloadBuilder).addCustomProperty("callId", id).buildWithDefaultMaximumLength()
+      for {
+        (member, creds) ← acredsMap
+        cred ← creds
+        instance ← apnsExt.getVoipInstance(cred.apnsKey)
+      } yield {
+        val payload =
+          (new ApnsPayloadBuilder)
+            .addCustomProperty("callId", id)
+            .addCustomProperty("attemptIndex", member.callAttempts)
+            .buildWithDefaultMaximumLength()
+        val notif = new SimpleApnsPushNotification(cred.token.toByteArray, payload)
+        instance.getQueue.add(notif)
+      }
 
-        val instanceCreds = apnsExt.getVoipInstance(creds.apnsKey) map (_ → creds)
-        for ((instance, cred) ← instanceCreds) {
-          val notif = new SimpleApnsPushNotification(cred.token.toByteArray, payload)
-          instance.getQueue.add(notif)
-        }
+      for {
+        (member, creds) ← gcredsMap
+        cred ← creds
+      } yield {
+        val message = new GooglePushMessage(
+          cred.regId,
+          None,
+          Some(Map("callId" → id.toString, "attemptIndex" → member.callAttempts.toString))
+        )
+        gcmExt.send(cred.projectId, message)
+      }
+
+      for {
+        (member, creds) ← ourCredsMap
+        cred ← creds
+      } yield {
+        actorPush.deliver(ActorPushMessage(
+          "callId" → id.toString,
+          "attemptIndex" → member.callAttempts.toString
+        ), cred)
       }
 
       scheduledUpds =
