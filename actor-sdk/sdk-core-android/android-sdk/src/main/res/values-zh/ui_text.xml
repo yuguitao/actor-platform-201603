@@ -4,7 +4,7 @@
   -->
 
 <resources>
-    <string name="app_name">优聆</string>
+    <string name="app_name">企业网聊</string>
     <string name="app_locale">Cn</string>
 
     <string name="dialog_ok">确定</string>
@@ -34,7 +34,7 @@
     <string name="menu_saved">保存</string>
     <string name="menu_next">下一步</string>
 
-    <string name="invite_message">您好！让我们一起使用{appName}安全开聊吧! {inviteUrl}</string>
+    <string name="invite_message">您好！让我们一起使用企业网聊安全开聊吧! {inviteUrl}</string>
 
     <!-- Tour -->
     <string name="tour_sign_up">注册</string>
@@ -44,7 +44,7 @@
     <string name="tour_sign_using_oauth">(使用谷歌)</string>
     <string name="tour_back_to_top">返回顶部</string>
 
-    <string name="tour_welcome_title">{appName}</string>
+    <string name="tour_welcome_title">企业网聊</string>
     <string name="tour_welcome_subtitle">针对团队和朋友的安全交流工具</string>
 
     <string name="tour_groups_title">超多人的群组</string>
@@ -131,7 +131,7 @@
     <string name="main_sync_message">请稍等，应用马上可用</string>
 
     <string name="main_empty_title">邀请好友</string>
-    <string name="main_empty_invite_hint">你的好友无人使用{appName}，使用下面按钮邀请他们吧。</string>
+    <string name="main_empty_invite_hint">你的好友无人使用企业网聊，使用下面按钮邀请他们吧。</string>
     <string name="main_empty_invite_action">告诉好友</string>
     <string name="main_empty_add_hint">或者手动添加好友</string>
     <string name="main_empty_add_action">添加好友</string>
@@ -147,10 +147,19 @@
     <string name="settings_notifications">推送通知</string>
     <string name="settings_chat">聊天设置</string>
     <string name="settings_security">安全</string>
+    <string name="nickname_empty">设置昵称</string>
+    <string name="nickname_change">修改昵称</string>
+    <string name="nickname">昵称</string>
+    <string name="nickname_hint">你可以设置一个用户名. 如果设置成功, 其他用户可以通过用户名找到并且联系你，而不需要知道你的手机号码.\n\n你可以选择 a–z, 0–9 和 下划线. 最小长度是5个字符</string>
+    <string name="nickname_edittext_hint">输入你的用户名</string>
+    <string name="about_user_me">个性签名</string>
+    <string name="about_user">关于用户</string>
+    <string name="wallpaper">壁纸</string>
 
     <!-- Profile controls -->
     <string name="phone_menu_call">拨打 {0}</string>
     <string name="phone_menu_sms">发短信给 {0}</string>
+    <string name="email_menu_email">发邮件给 {0}</string>
     <string name="phone_menu_share">共享给 {0}</string>
     <string name="phone_menu_copy">复制</string>
 
@@ -172,11 +181,11 @@
     <!-- Contacts -->
     <string name="contacts_title">好友</string>
     <string name="contacts_empty_short">还没有任何好友</string>
-    <string name="contacts_share">把{appName}告诉好友</string>
+    <string name="contacts_share">把企业网聊告诉好友</string>
     <string name="contacts_add">添加好友...</string>
 
     <string name="contacts_empty_title">邀请好友</string>
-    <string name="contacts_empty_invite_hint">你的好友无人使用{appName}，使用下面按钮邀请他们吧。</string>
+    <string name="contacts_empty_invite_hint">你的好友无人使用企业网聊，使用下面按钮邀请他们吧。</string>
     <string name="contacts_empty_invite_action">告诉好友</string>
     <string name="contacts_empty_add_hint">或者点击下面的＋号按钮手动添加好友。</string>
 
@@ -306,7 +315,7 @@
 
     <!-- Invite link-->
     <string name="invite_link_title">邀请链接</string>
-    <string name="invite_link_hint">通过以下链接可以邀请已经安装{appName}的用户加入你的群组</string>
+    <string name="invite_link_hint">通过以下链接可以邀请已经安装企业网聊的用户加入你的群组</string>
     <string name="invite_link_action_copy">复制链接</string>
     <string name="invite_link_action_revoke">重置链接</string>
     <string name="invite_link_action_share">分享链接</string>
@@ -400,7 +409,7 @@
     <string name="alert_group_remove_text">确认要从群组中移除{0}吗?</string>
     <string name="alert_group_remove_yes">移除</string>
 
-    <string name="alert_invite_text">"{0}"没有注册{appName}。 邀请他使用{appName}吗?</string>
+    <string name="alert_invite_text">"{0}"没有注册企业网聊。 邀请他使用企业网聊吗?</string>
     <string name="alert_invite_yes">邀请</string>
 
     <!-- Media -->
